@@ -306,7 +306,7 @@
     <div class="absolute bottom-4 left-3 z-10">
       <button onclick="cycleMapStyle()" id="mapStyleBtn" class="bg-slate-900/95 text-slate-200 border border-slate-700 shadow-xl px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-1.5 active:scale-95">
         <i class="fa-solid fa-layer-group text-sky-400"></i>
-        <span id="mapStyleLabel">Mappa Chiara</span>
+        <span id="mapStyleLabel">Predefinita</span>
       </button>
     </div>
 
@@ -691,6 +691,7 @@
           <label class="block text-slate-300 font-semibold mb-1.5">Orario Inizio (Slot liberi da 1h 30m)</label>
           <div id="phoneTimeSlotsGrid" class="grid grid-cols-3 gap-1.5"></div>
           <input type="hidden" id="phoneSelectedStartTime" value="" />
+          <p id="phoneTimeSlotHelper" class="text-[11px] text-amber-400 mt-1.5 hidden"></p>
         </div>
 
         <div class="border-t border-slate-800 pt-3 space-y-2.5">
@@ -784,8 +785,130 @@
   <!-- LOGICA APPLICAZIONE                                       -->
   <!-- ========================================================= -->
   <script>
-    const VENUES_CONFIG = window.VENUES_CONFIG || [];
-    const ADMIN_EMAILS = (window.ADMIN_EMAILS || []).map(e => e.toLowerCase().trim());
+    const FALLBACK_ADMIN_EMAILS = [
+      "domenico.colandrea007@gmail.com"
+    ];
+
+    const FALLBACK_VENUES = [
+      {
+        id: "da_innaro",
+        name: "Agriturismo Da Innaro",
+        shortName: "Da Innaro",
+        city: "Monte di Procida",
+        address: "Via Amedeo 92, Monte di Procida",
+        lat: 40.80373,
+        lng: 14.04886,
+        managerEmails: [],
+        pitches: [
+          { id: "innaro_c1", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 },
+          { id: "innaro_c2", name: "Campo 2 (C5)", format: "C5", maxPlayers: 10 }
+        ]
+      },
+      {
+        id: "maracana_bacoli",
+        name: "Centro Sportivo Maracanà",
+        shortName: "Maracanà",
+        city: "Bacoli",
+        address: "Viale Olimpico 150, Bacoli",
+        lat: 40.80584,
+        lng: 14.07682,
+        managerEmails: [],
+        pitches: [
+          { id: "maracana_c1", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 },
+          { id: "maracana_c2", name: "Campo 2 (C5)", format: "C5", maxPlayers: 10 }
+        ]
+      },
+      {
+        id: "calcetto_zeus",
+        name: "ASD Calcetto Zeus",
+        shortName: "Zeus",
+        city: "Bacoli",
+        address: "Via Ottaviano Augusto 65, Bacoli",
+        lat: 40.81729,
+        lng: 14.06155,
+        managerEmails: [],
+        pitches: [
+          { id: "zeus_c1", name: "Campo Zeus (C5)", format: "C5", maxPlayers: 10 }
+        ]
+      },
+      {
+        id: "oblio_calcetto",
+        name: "Oblio Calcetto Miliscola",
+        shortName: "Oblio",
+        city: "Bacoli",
+        address: "Via Lido Miliscola 40, Bacoli",
+        lat: 40.79060,
+        lng: 14.07630,
+        managerEmails: [],
+        pitches: [
+          { id: "oblio_c1", name: "Campo Miliscola (C5)", format: "C5", maxPlayers: 10 }
+        ]
+      },
+      {
+        id: "oasi_pozzuoli",
+        name: "Centro Sportivo Oasi",
+        shortName: "C.S. Oasi",
+        city: "Pozzuoli",
+        address: "Via Campana 237, Pozzuoli",
+        lat: 40.83850,
+        lng: 14.10390,
+        managerEmails: [],
+        pitches: [
+          { id: "oasi_c5", name: "Campo A (C5)", format: "C5", maxPlayers: 10 },
+          { id: "oasi_c8", name: "Campo Grande (Calciotto)", format: "C8", maxPlayers: 16 }
+        ]
+      },
+      {
+        id: "monterusciello_sport",
+        name: "Centro Sportivo Monterusciello",
+        shortName: "Monterusciello",
+        city: "Pozzuoli",
+        address: "Via Cosimo Luigi Miccoli, Monterusciello",
+        lat: 40.86542,
+        lng: 14.07718,
+        managerEmails: [],
+        pitches: [
+          { id: "mont_c5", name: "Campo C5", format: "C5", maxPlayers: 10 },
+          { id: "mont_c8", name: "Campo Calciotto (C8)", format: "C8", maxPlayers: 16 }
+        ]
+      },
+      {
+        id: "san_germano",
+        name: "San Germano Football & More",
+        shortName: "San Germano",
+        city: "Agnano",
+        address: "Via Antonio Beccadelli 75, Agnano",
+        lat: 40.82670,
+        lng: 14.16850,
+        managerEmails: [],
+        pitches: [
+          { id: "sg_c5", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 },
+          { id: "sg_c8", name: "Campo Calciotto (C8)", format: "C8", maxPlayers: 16 }
+        ]
+      },
+      {
+        id: "sporting_agnano",
+        name: "Sporting Club Agnano",
+        shortName: "Sporting Agnano",
+        city: "Agnano / Pozzuoli",
+        address: "Via Agnano agli Astroni 293, Agnano",
+        lat: 40.83852,
+        lng: 14.16741,
+        managerEmails: [],
+        pitches: [
+          { id: "sp_agnano_c5", name: "Campo C5", format: "C5", maxPlayers: 10 },
+          { id: "sp_agnano_c8", name: "Campo Calciotto (C8)", format: "C8", maxPlayers: 16 }
+        ]
+      }
+    ];
+
+    const VENUES_CONFIG = (window.VENUES_CONFIG && Array.isArray(window.VENUES_CONFIG) && window.VENUES_CONFIG.length > 0)
+      ? window.VENUES_CONFIG
+      : FALLBACK_VENUES;
+
+    const ADMIN_EMAILS = ((window.ADMIN_EMAILS && Array.isArray(window.ADMIN_EMAILS) && window.ADMIN_EMAILS.length > 0)
+      ? window.ADMIN_EMAILS
+      : FALLBACK_ADMIN_EMAILS).map(e => e.toLowerCase().trim());
 
     const START_TIMES = [
       "17:00", "17:30", "18:00", "18:30",
@@ -825,8 +948,7 @@
     let mapMarkers = [];
     let userLocationMarker = null;
 
-    
-const MAP_STYLES = [
+    const MAP_STYLES = [
       {
         name: "Predefinita",
         url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -854,7 +976,10 @@ const MAP_STYLES = [
       for (let i = 0; i < 7; i++) {
         const d = new Date();
         d.setDate(d.getDate() + i);
-        const iso = d.toISOString().split("T")[0];
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const iso = `${year}-${month}-${day}`;
         const label = i === 0 ? `Oggi (${d.getDate()}/${d.getMonth()+1})`
                     : i === 1 ? `Domani (${d.getDate()}/${d.getMonth()+1})`
                     : `${dayNames[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
@@ -872,6 +997,26 @@ const MAP_STYLES = [
       const h = Math.floor(mins / 60) % 24;
       const m = mins % 60;
       return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    }
+
+    function isTimeSlotPast(dateIso, startStr) {
+      if (!dateIso || !startStr) return false;
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const todayIso = `${year}-${month}-${day}`;
+      const todayUtcIso = now.toISOString().split("T")[0];
+
+      // Se la data selezionata è precedente a oggi
+      if (dateIso < todayIso && dateIso < todayUtcIso) return true;
+      // Se la data è futura rispetto a oggi
+      if (dateIso > todayIso && dateIso > todayUtcIso) return false;
+
+      // La data selezionata è oggi: confronta con l'orario reale corrente del sistema
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const slotMinutes = timeToMinutes(startStr);
+      return slotMinutes <= currentMinutes;
     }
 
     function buildWhatsAppLink(phoneRaw, textMessage) {
@@ -1155,6 +1300,7 @@ const MAP_STYLES = [
         maxZoom: 19,
         attribution: styleObj.attribution
       }).addTo(mapInstance);
+      currentTileLayer.bringToBack();
       
       const label = document.getElementById("mapStyleLabel");
       if (label) label.textContent = styleObj.name;
@@ -1192,15 +1338,17 @@ const MAP_STYLES = [
       mapMarkers.forEach(m => mapInstance.removeLayer(m));
       mapMarkers = [];
 
-      const formatFilter = document.getElementById("filterFormat").value;
-      const roleFilter = document.getElementById("filterRole").value;
-      const dateFilter = document.getElementById("filterDate").value;
+      const formatFilter = document.getElementById("filterFormat") ? document.getElementById("filterFormat").value : "ALL";
+      const roleFilter = document.getElementById("filterRole") ? document.getElementById("filterRole").value : "ALL";
+      const dateFilter = document.getElementById("filterDate") ? document.getElementById("filterDate").value : "ALL";
+      const currentBookings = Array.isArray(bookings) ? bookings : [];
 
       VENUES_CONFIG.forEach(venue => {
-        const openMatches = bookings.filter(b => {
+        const openMatches = currentBookings.filter(b => {
           if (b.venueId !== venue.id || b.status !== "CONFIRMED" || !b.needsPlayers) return false;
           if (formatFilter !== "ALL" && b.format !== formatFilter) return false;
           if (dateFilter !== "ALL" && b.date !== dateFilter) return false;
+          if (isTimeSlotPast(b.date, b.startTime)) return false;
 
           const openSlots = (b.slots || []).filter(s => s.status === "OPEN");
           if (openSlots.length === 0) return false;
@@ -1272,13 +1420,14 @@ const MAP_STYLES = [
         if (b.venueId !== venueId || b.status !== "CONFIRMED" || !b.needsPlayers) return false;
         if (formatFilter !== "ALL" && b.format !== formatFilter) return false;
         if (dateFilter !== "ALL" && b.date !== dateFilter) return false;
+        if (isTimeSlotPast(b.date, b.startTime)) return false;
         const openSlots = (b.slots || []).filter(s => s.status === "OPEN");
         if (openSlots.length === 0) return false;
         if (roleFilter !== "ALL") return openSlots.some(s => s.role === roleFilter || s.role === "ANY");
         return true;
       });
 
-      const formatsBadges = [...new Set(venue.pitches.map(p => p.format))]
+      const formatsBadges = [...new Set((venue.pitches || []).map(p => p.format))]
         .map(f => `<span class="bg-slate-800 text-emerald-400 border border-slate-700 px-2 py-0.5 rounded text-[11px] font-bold">${f === "C5" ? "Calcio a 5 (10p)" : "Calciotto (16p)"}</span>`)
         .join(" ");
 
@@ -1406,6 +1555,11 @@ const MAP_STYLES = [
     async function handleSlotAction(matchId, slotId) {
       const match = bookings.find(b => b.id === matchId);
       if (!match) return;
+      if (isTimeSlotPast(match.date, match.startTime)) {
+        alert("Questa partita è già iniziata o trascorsa!");
+        openVenueSheet(match.venueId);
+        return;
+      }
       const slot = (match.slots || []).find(s => s.id === slotId);
       if (!slot || slot.status !== "OPEN") return;
 
@@ -1461,7 +1615,8 @@ const MAP_STYLES = [
 
     function onBookVenueChange() {
       const venueId = document.getElementById("bookVenue").value;
-      const venue = VENUES_CONFIG.find(v => v.id === venueId);
+      const venue = VENUES_CONFIG.find(v => v.id === venueId) || VENUES_CONFIG[0];
+      if (!venue || !venue.pitches || venue.pitches.length === 0) return;
       const pitchSelect = document.getElementById("bookPitch");
 
       pitchSelect.innerHTML = venue.pitches.map(p =>
@@ -1474,8 +1629,10 @@ const MAP_STYLES = [
     function onBookPitchChange() {
       const venueId = document.getElementById("bookVenue").value;
       const pitchId = document.getElementById("bookPitch").value;
-      const venue = VENUES_CONFIG.find(v => v.id === venueId);
-      const pitch = venue.pitches.find(p => p.id === pitchId);
+      const venue = VENUES_CONFIG.find(v => v.id === venueId) || VENUES_CONFIG[0];
+      if (!venue || !venue.pitches || venue.pitches.length === 0) return;
+      const pitch = venue.pitches.find(p => p.id === pitchId) || venue.pitches[0];
+      if (!pitch) return;
 
       const badge = document.getElementById("bookFormatBadge");
       badge.textContent = pitch.format === "C5"
@@ -1512,20 +1669,31 @@ const MAP_STYLES = [
       const dateIso = document.getElementById("bookDate").value;
       const grid = document.getElementById("timeSlotsGrid");
       const selectedInput = document.getElementById("selectedStartTime");
+      const helper = document.getElementById("timeSlotHelper");
 
       let firstAvailable = "";
 
       grid.innerHTML = START_TIMES.map(startStr => {
         const endStr = minutesToTime(timeToMinutes(startStr) + MATCH_DURATION_MIN);
+        const isPast = isTimeSlotPast(dateIso, startStr);
         const blocked = isSlotOverlapping(venueId, pitchId, dateIso, startStr);
 
-        if (!blocked && !firstAvailable) firstAvailable = startStr;
+        if (!isPast && !blocked && !firstAvailable) firstAvailable = startStr;
+
+        if (isPast) {
+          return `
+            <button type="button" disabled class="p-2 rounded-xl border border-slate-800 bg-slate-950/60 text-slate-600 text-center cursor-not-allowed opacity-50 select-none">
+              <div class="font-bold text-xs line-through text-slate-500">${startStr}</div>
+              <div class="text-[10px] line-through text-slate-600">Passato</div>
+            </button>
+          `;
+        }
 
         if (blocked) {
           return `
             <button type="button" disabled class="p-2 rounded-xl border border-slate-800 bg-slate-950 text-slate-600 text-center cursor-not-allowed">
               <div class="font-bold text-xs line-through">${startStr}</div>
-              <div class="text-[10px]">Occupato</div>
+              <div class="text-[10px] text-rose-500/80">Occupato</div>
             </button>
           `;
         }
@@ -1540,7 +1708,15 @@ const MAP_STYLES = [
       }).join("");
 
       selectedInput.value = "";
-      if (firstAvailable) selectTimeSlot(firstAvailable);
+      if (firstAvailable) {
+        selectTimeSlot(firstAvailable);
+      } else {
+        if (helper) {
+          helper.textContent = "⚠️ Nessun orario disponibile per la giornata selezionata (tutti gli slot sono già passati o occupati).";
+          helper.className = "text-[11px] text-amber-400 mt-1.5";
+          helper.classList.remove("hidden");
+        }
+      }
     }
 
     function selectTimeSlot(startStr) {
@@ -1554,8 +1730,11 @@ const MAP_STYLES = [
       }
       const endStr = minutesToTime(timeToMinutes(startStr) + MATCH_DURATION_MIN);
       const helper = document.getElementById("timeSlotHelper");
-      helper.textContent = `✓ Campo bloccato dalle ${startStr} alle ${endStr} (1h 30m).`;
-      helper.classList.remove("hidden");
+      if (helper) {
+        helper.textContent = `✓ Campo bloccato dalle ${startStr} alle ${endStr} (1h 30m).`;
+        helper.className = "text-[11px] text-amber-400 mt-1.5";
+        helper.classList.remove("hidden");
+      }
     }
 
     function toggleNeedPlayersSection() {
@@ -1595,14 +1774,23 @@ const MAP_STYLES = [
         return;
       }
 
+      if (isTimeSlotPast(dateIso, startTime)) {
+        alert("L'orario selezionato è già trascorso per la giornata odierna! Scegli uno slot futuro.");
+        renderTimeSlotGrid();
+        return;
+      }
+
       if (isSlotOverlapping(venueId, pitchId, dateIso, startTime)) {
         alert("Questo orario è appena stato occupato!");
         renderTimeSlotGrid();
         return;
       }
 
-      const venue = VENUES_CONFIG.find(v => v.id === venueId);
-      const pitch = venue.pitches.find(p => p.id === pitchId);
+      const venue = VENUES_CONFIG.find(v => v.id === venueId) || VENUES_CONFIG[0];
+      if (!venue || !venue.pitches || venue.pitches.length === 0) return;
+      const pitch = venue.pitches.find(p => p.id === pitchId) || venue.pitches[0];
+      if (!pitch) return;
+
       const needsPlayers = document.getElementById("needPlayersToggle").checked;
       const startMinutes = timeToMinutes(startTime);
       const endMinutes = startMinutes + MATCH_DURATION_MIN;
@@ -1632,8 +1820,8 @@ const MAP_STYLES = [
       const bookingId = `bk_${Date.now()}`;
       const newBooking = {
         id: bookingId,
-        venueId,
-        pitchId,
+        venueId: venue.id,
+        pitchId: pitch.id,
         pitchName: pitch.name,
         format: pitch.format,
         maxPlayers: pitch.maxPlayers,
@@ -1865,7 +2053,7 @@ const MAP_STYLES = [
     }
 
     function buildVenueScheduleHtml(venue, dateIso) {
-      return venue.pitches.map(pitch => {
+      return (venue.pitches || []).map(pitch => {
         const pitchBookings = bookings
           .filter(b => b.venueId === venue.id && b.pitchId === pitch.id && b.date === dateIso && b.status === "CONFIRMED")
           .sort((a, b) => a.startMinutes - b.startMinutes);
@@ -1906,7 +2094,7 @@ const MAP_STYLES = [
               `;
             }).join("");
 
-        const freeTimes = START_TIMES.filter(t => !isSlotOverlapping(venue.id, pitch.id, dateIso, t));
+        const freeTimes = START_TIMES.filter(t => !isTimeSlotPast(dateIso, t) && !isSlotOverlapping(venue.id, pitch.id, dateIso, t));
 
         return `
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
@@ -1933,14 +2121,14 @@ const MAP_STYLES = [
     }
 
     function openPhoneBookingModal(targetVenueId = null) {
-      const venueId = targetVenueId || currentUser.managedVenueId;
-      const venue = VENUES_CONFIG.find(v => v.id === venueId);
+      const venueId = targetVenueId || (currentUser ? currentUser.managedVenueId : null) || (VENUES_CONFIG[0] ? VENUES_CONFIG[0].id : null);
+      const venue = VENUES_CONFIG.find(v => v.id === venueId) || VENUES_CONFIG[0];
       if (!venue) return;
 
       document.getElementById("phoneBookVenueId").value = venue.id;
       document.getElementById("phoneBookVenueLabel").value = `${venue.name} (${venue.city})`;
 
-      document.getElementById("phoneBookPitch").innerHTML = venue.pitches.map(p =>
+      document.getElementById("phoneBookPitch").innerHTML = (venue.pitches || []).map(p =>
         `<option value="${p.id}">${escapeHtml(p.name)}</option>`
       ).join("");
 
@@ -1965,25 +2153,49 @@ const MAP_STYLES = [
       const pitchId = document.getElementById("phoneBookPitch").value;
       const dateIso = document.getElementById("phoneBookDate").value;
       const grid = document.getElementById("phoneTimeSlotsGrid");
+      const helper = document.getElementById("phoneTimeSlotHelper");
 
       let firstFree = "";
       grid.innerHTML = START_TIMES.map(startStr => {
+        const isPast = isTimeSlotPast(dateIso, startStr);
         const blocked = isSlotOverlapping(venueId, pitchId, dateIso, startStr);
-        if (!blocked && !firstFree) firstFree = startStr;
+        if (!isPast && !blocked && !firstFree) firstFree = startStr;
+
+        if (isPast) {
+          return `
+            <button type="button" disabled class="p-2 rounded-xl border border-slate-800 bg-slate-950/60 text-slate-600 text-xs cursor-not-allowed opacity-50 select-none text-center">
+              <span class="line-through text-slate-500">${startStr}</span>
+              <span class="block text-[10px] line-through text-slate-600">Passato</span>
+            </button>
+          `;
+        }
 
         if (blocked) {
-          return `<button type="button" disabled class="p-2 rounded-xl border border-slate-800 bg-slate-950 text-slate-600 text-xs line-through cursor-not-allowed">${startStr}</button>`;
+          return `
+            <button type="button" disabled class="p-2 rounded-xl border border-slate-800 bg-slate-950 text-slate-600 text-xs cursor-not-allowed text-center">
+              <span class="line-through">${startStr}</span>
+              <span class="block text-[10px] text-rose-500/80">Occupato</span>
+            </button>
+          `;
         }
         return `
           <button type="button" onclick="selectPhoneTimeSlot('${startStr}')" id="phoneSlot_${startStr.replace(':','')}"
-            class="phone-slot-btn p-2 rounded-xl border border-slate-700 bg-slate-950 text-white font-bold text-xs">
+            class="phone-slot-btn p-2 rounded-xl border border-slate-700 bg-slate-950 text-white font-bold text-xs hover:border-amber-400 transition">
             ${startStr}
           </button>
         `;
       }).join("");
 
       document.getElementById("phoneSelectedStartTime").value = "";
-      if (firstFree) selectPhoneTimeSlot(firstFree);
+      if (firstFree) {
+        selectPhoneTimeSlot(firstFree);
+      } else {
+        if (helper) {
+          helper.textContent = "⚠️ Nessun orario disponibile per la data selezionata (tutti gli slot sono già passati o occupati).";
+          helper.className = "text-[11px] text-amber-400 mt-1.5";
+          helper.classList.remove("hidden");
+        }
+      }
     }
 
     function selectPhoneTimeSlot(startStr) {
@@ -1993,6 +2205,13 @@ const MAP_STYLES = [
       });
       const btn = document.getElementById(`phoneSlot_${startStr.replace(':','')}`);
       if (btn) btn.classList.add("border-amber-500", "bg-amber-500/20", "text-amber-300");
+      const endStr = minutesToTime(timeToMinutes(startStr) + MATCH_DURATION_MIN);
+      const helper = document.getElementById("phoneTimeSlotHelper");
+      if (helper) {
+        helper.textContent = `✓ Slot selezionato: ${startStr} - ${endStr} (1h 30m).`;
+        helper.className = "text-[11px] text-amber-300 mt-1.5 font-semibold";
+        helper.classList.remove("hidden");
+      }
     }
 
     async function submitPhoneBooking() {
@@ -2007,13 +2226,21 @@ const MAP_STYLES = [
         alert("Seleziona un orario libero!");
         return;
       }
+      if (isTimeSlotPast(dateIso, startTime)) {
+        alert("L'orario selezionato è già passato per la giornata odierna!");
+        renderPhoneTimeSlots();
+        return;
+      }
       if (!custName || custPhone.length < 8) {
         alert("Inserisci il nome e il numero di telefono del cliente che ha prenotato!");
         return;
       }
 
-      const venue = VENUES_CONFIG.find(v => v.id === venueId);
-      const pitch = venue.pitches.find(p => p.id === pitchId);
+      const venue = VENUES_CONFIG.find(v => v.id === venueId) || VENUES_CONFIG[0];
+      if (!venue || !venue.pitches || venue.pitches.length === 0) return;
+      const pitch = venue.pitches.find(p => p.id === pitchId) || venue.pitches[0];
+      if (!pitch) return;
+
       const startMinutes = timeToMinutes(startTime);
       const endMinutes = startMinutes + MATCH_DURATION_MIN;
       const endTime = minutesToTime(endMinutes);
@@ -2021,8 +2248,8 @@ const MAP_STYLES = [
       const bookingId = `bk_tel_${Date.now()}`;
       const newBooking = {
         id: bookingId,
-        venueId,
-        pitchId,
+        venueId: venue.id,
+        pitchId: pitch.id,
         pitchName: pitch.name,
         format: pitch.format,
         maxPlayers: pitch.maxPlayers,
@@ -2162,13 +2389,24 @@ const MAP_STYLES = [
       const days = getNext7Days();
       const dayOptions = days.map(d => `<option value="${d.iso}">${d.label}</option>`).join("");
 
-      document.getElementById("filterDate").innerHTML = `<option value="ALL">📅 Tutti i giorni</option>` + dayOptions;
-      document.getElementById("mgrDateSelect").innerHTML = dayOptions;
-      document.getElementById("adminDateSelect").innerHTML = dayOptions;
-      document.getElementById("adminVenueSelect").innerHTML = VENUES_CONFIG.map(v =>
-        `<option value="${v.id}">${escapeHtml(v.name)} (${escapeHtml(v.city)})</option>`
-      ).join("");
+      const filterDateEl = document.getElementById("filterDate");
+      const mgrDateEl = document.getElementById("mgrDateSelect");
+      const adminDateEl = document.getElementById("adminDateSelect");
+      const adminVenueEl = document.getElementById("adminVenueSelect");
+
+      if (filterDateEl) filterDateEl.innerHTML = `<option value="ALL">📅 Tutti i giorni</option>` + dayOptions;
+      if (mgrDateEl) mgrDateEl.innerHTML = dayOptions;
+      if (adminDateEl) adminDateEl.innerHTML = dayOptions;
+      if (adminVenueEl) {
+        adminVenueEl.innerHTML = VENUES_CONFIG.map(v =>
+          `<option value="${v.id}">${escapeHtml(v.name)} (${escapeHtml(v.city)})</option>`
+        ).join("");
+      }
     }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      initDateSelects();
+    });
 
     if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
       window.addEventListener("load", () => {

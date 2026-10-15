@@ -38,8 +38,8 @@ window.VENUES_CONFIG = [
     shortName: "Maracanà",
     city: "Bacoli",
     address: "Viale Olimpico 150, Bacoli",
-    lat: 40.80584,
-    lng: 14.07682,
+    lat: 40.80258,
+    lng: 14.06186,
     managerEmails: [],
     pitches: [
       { id: "maracana_c1", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 },
@@ -52,8 +52,8 @@ window.VENUES_CONFIG = [
     shortName: "Zeus",
     city: "Bacoli",
     address: "Via Ottaviano Augusto 65, Bacoli",
-    lat: 40.80095,
-    lng: 14.08183,
+    lat: 40.81729,
+    lng: 14.06155,
     managerEmails: [],
     pitches: [
       { id: "zeus_c1", name: "Campo Zeus (C5)", format: "C5", maxPlayers: 10 }
@@ -65,8 +65,8 @@ window.VENUES_CONFIG = [
     shortName: "Oblio",
     city: "Bacoli",
     address: "Via Lido Miliscola 40, Bacoli",
-    lat: 40.79155,
-    lng: 14.07635,
+    lat: 40.7906 ,
+    lng: 14.0763 ,
     managerEmails: [],
     pitches: [
       { id: "oblio_c1", name: "Campo Miliscola (C5)", format: "C5", maxPlayers: 10 }
@@ -78,8 +78,8 @@ window.VENUES_CONFIG = [
     shortName: "C.S. Oasi",
     city: "Pozzuoli",
     address: "Via Campana 237, Pozzuoli",
-    lat: 40.85590,
-    lng: 14.11560,
+    lat: 40.8385 ,
+    lng: 14.1039 ,
     managerEmails: [],
     pitches: [
       { id: "oasi_c5", name: "Campo A (C5)", format: "C5", maxPlayers: 10 },
@@ -107,8 +107,8 @@ window.VENUES_CONFIG = [
     shortName: "San Germano",
     city: "Agnano",
     address: "Via Antonio Beccadelli 75, Agnano",
-    lat: 40.83446,
-    lng: 14.15935,
+    lat: 40.8267,
+    lng: 14.1685,
     managerEmails: [],
     pitches: [
       { id: "sg_c5", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 },
