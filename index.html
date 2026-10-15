@@ -29,7 +29,7 @@
   <!-- File Esterno Centri Sportivi & Admin -->
   <script src="./CentriSportivi.js"></script>
 
-  <style>
+    <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: #020617;
@@ -37,14 +37,21 @@
       overscroll-behavior-y: contain;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-    }
-    /* Fix Definitivo Safe Area Superiore e Inferiore per iPhone (Notch / Dynamic Island) */
-    .ios-safe-top {
-      padding-top: max(0.75rem, env(safe-area-inset-top));
+      padding-top: env(safe-area-inset-top);
       background-color: #0f172a;
     }
+
+    .ios-safe-top {
+      background-color: #0f172a;
+    }
+    
     .ios-safe-bottom {
-      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    nav {
+      padding-bottom: env(safe-area-inset-bottom);
+      height: calc(4.25rem + env(safe-area-inset-bottom));
     }
 
     #map {
@@ -54,7 +61,6 @@
       background: #0f172a;
     }
 
-    /* Pin Mappa ancorati esattamente sulla posizione reale del Centro Sportivo */
     .map-pin-anchor {
       position: relative;
       transform: translate(-50%, -100%);
@@ -110,6 +116,7 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
+
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden bg-slate-950">
 
