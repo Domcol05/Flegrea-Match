@@ -1,8 +1,9 @@
-const CACHE_NAME = "flegrei-match-pwa-v2";
+const CACHE_NAME = "flegrei-match-pwa-v3";
 
 const INITIAL_ASSETS = [
   "./",
   "./index.html",
+  "./CentriSportivi.js",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
@@ -33,8 +34,8 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
 
-  // Cache per le tile di OpenStreetMap
-  if (url.hostname.includes("tile.openstreetmap.org")) {
+  // Cache per le tile della mappa (CartoDB & Esri)
+  if (url.hostname.includes("basemaps.cartocdn.com") || url.hostname.includes("arcgisonline.com")) {
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) =>
         cache.match(event.request).then((cachedResponse) => {
@@ -51,7 +52,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-First per il resto dell'app
+  // Strategia Network-First per avere sempre i file aggiornati
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {

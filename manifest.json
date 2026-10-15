@@ -1,6 +1,6 @@
 {
-  "name": "Flegrei Match - Prenota & Cerca Uomo",
-  "short_name": "FlegreiMatch",
+  "name": "Flegrea Match - Prenota & Cerca Uomo",
+  "short_name": "FlegreaMatch",
   "description": "Prenota campi da Calcio a 5 e Calciotto e trova i giocatori mancanti nei Campi Flegrei.",
   "lang": "it-IT",
   "start_url": "./index.html",
