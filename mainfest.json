@@ -1,0 +1,26 @@
+{
+  "name": "Flegrei Match - Prenota & Cerca Uomo",
+  "short_name": "FlegreiMatch",
+  "description": "Prenota campi da Calcio a 5 e Calciotto e trova i giocatori mancanti nei Campi Flegrei.",
+  "lang": "it-IT",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
