@@ -7,7 +7,7 @@
 // 1. EMAIL SUPER-ADMIN (PROPRIETARIO DELL'APP)
 // Inserisci qui la tua email Google per sbloccare la scheda "👑 Admin"
 window.ADMIN_EMAILS = [
-  "domenico.colandrea007@gmail.com"
+  "domenico.colandrea@gmail.com"
 ];
 
 // 2. LISTA DEI CENTRI SPORTIVI DELLA ZONA FLEGREA
