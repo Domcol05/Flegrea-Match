@@ -1,4 +1,4 @@
-const CACHE_NAME = "flegrei-match-pwa-v3";
+const CACHE_NAME = "flegrei-match-pwa-v5";
 
 const INITIAL_ASSETS = [
   "./",
@@ -17,7 +17,7 @@ const INITIAL_ASSETS = [
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(INITIAL_ASSETS).catch(() => {}))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(INITIAL_ASSETS).catch(() => { }))
   );
 });
 
@@ -34,8 +34,8 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
 
-  // Cache per le tile della mappa (CartoDB & Esri)
-  if (url.hostname.includes("basemaps.cartocdn.com") || url.hostname.includes("arcgisonline.com")) {
+  // Cache per OpenStreetMap e Satellite Esri
+  if (url.hostname.includes("tile.openstreetmap.org") || url.hostname.includes("arcgisonline.com")) {
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) =>
         cache.match(event.request).then((cachedResponse) => {
