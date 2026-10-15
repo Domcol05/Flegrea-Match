@@ -42,7 +42,7 @@ window.VENUES_CONFIG = [
     lng: 14.07682,
     managerEmails: [],
     pitches: [
-      { id: "maracana_c1", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 }
+      { id: "maracana_c1", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 },
       { id: "maracana_c2", name: "Campo 2 (C5)", format: "C5", maxPlayers: 10 }
     ]
   },
