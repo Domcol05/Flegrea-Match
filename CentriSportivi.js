@@ -7,7 +7,7 @@
 // 1. EMAIL SUPER-ADMIN (PROPRIETARIO DELL'APP)
 // Inserisci qui la tua email Google per sbloccare la scheda "👑 Admin"
 window.ADMIN_EMAILS = [
-  
+  "flegreamatch@gmail.com"
 ];
 
 // 2. LISTA DEI CENTRI SPORTIVI DELLA ZONA FLEGREA
@@ -23,7 +23,7 @@ window.VENUES_CONFIG = [
     lat: 40.80373,
     lng: 14.04886,
     managerEmails: [
-      // "gestore.innaro@gmail.com"
+      "domenico.colandrea007@gmail.com"
     ],
     pitches: [
       { id: "innaro_c1", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 },
