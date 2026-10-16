@@ -997,8 +997,7 @@
   <!-- ========================================================= -->
   <script>
     const FALLBACK_ADMIN_EMAILS = [
-      "domenico.colandrea@gmail.com",
-      "domenico.colandrea007@gmail.com"
+      "flegreamatch@gmail.com"
     ];
 
     const FALLBACK_VENUES = [
@@ -1010,7 +1009,7 @@
         address: "Via Amedeo 92, Monte di Procida",
         lat: 40.80373,
         lng: 14.04886,
-        managerEmails: ["flegreamatch@gmail.com"],
+        managerEmails: ["domenico.colandrea007@gmail.com"],
         pitches: [
           { id: "innaro_c1", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 },
           { id: "innaro_c2", name: "Campo 2 (C5)", format: "C5", maxPlayers: 10 }
@@ -1118,10 +1117,9 @@
       ? window.VENUES_CONFIG
       : FALLBACK_VENUES;
 
-    const ADMIN_EMAILS = [...new Set([
-      ...(window.ADMIN_EMAILS && Array.isArray(window.ADMIN_EMAILS) ? window.ADMIN_EMAILS : []),
-      ...FALLBACK_ADMIN_EMAILS
-    ])].map(e => e.toLowerCase().trim());
+    const ADMIN_EMAILS = (window.ADMIN_EMAILS && Array.isArray(window.ADMIN_EMAILS) && window.ADMIN_EMAILS.length > 0)
+      ? window.ADMIN_EMAILS.map(e => String(e || "").toLowerCase().trim()).filter(Boolean)
+      : FALLBACK_ADMIN_EMAILS.map(e => String(e || "").toLowerCase().trim()).filter(Boolean);
 
     const START_TIMES = [
       "17:00", "17:30", "18:00", "18:30",
@@ -1334,6 +1332,24 @@
         managedVenueId: roleInfo.managedVenueId,
         onboardingDone: Boolean(savedProfile && savedProfile.onboardingDone)
       };
+
+      // Se il ruolo o la struttura assegnata sono cambiati, aggiorna Firestore e la cache locale
+      if (savedProfile && (savedProfile.accountType !== currentUser.accountType || savedProfile.managedVenueId !== currentUser.managedVenueId)) {
+        try {
+          savedProfile.accountType = currentUser.accountType;
+          savedProfile.managedVenueId = currentUser.managedVenueId;
+          localStorage.setItem(cacheKey, JSON.stringify(savedProfile));
+          if (window.FB && window.FB.db) {
+            window.FB.setDoc(window.FB.doc(window.FB.db, "users", firebaseUser.uid), {
+              accountType: currentUser.accountType,
+              managedVenueId: currentUser.managedVenueId,
+              updatedAt: new Date().toISOString()
+            }, { merge: true }).catch(() => {});
+          }
+        } catch (e) {
+          console.warn("Sincronizzazione ruolo profilo:", e);
+        }
+      }
 
       document.getElementById("authGateScreen").classList.add("hidden");
       startRealtimeCloudListeners();

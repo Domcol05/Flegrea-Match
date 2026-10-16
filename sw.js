@@ -1,4 +1,4 @@
-const CACHE_NAME = "flegrei-match-pwa-v8";
+const CACHE_NAME = "flegrei-match-pwa-v9";
 
 const INITIAL_ASSETS = [
   "./",
