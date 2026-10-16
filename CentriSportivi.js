@@ -23,7 +23,7 @@ window.VENUES_CONFIG = [
     lat: 40.80373,
     lng: 14.04886,
     managerEmails: [
-		flegreamatch@gmail.com
+		 flegreamatch@gmail.com
     ],
     pitches: [
       { id: "innaro_c1", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 },
