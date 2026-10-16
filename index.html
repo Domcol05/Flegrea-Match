@@ -135,6 +135,22 @@
 <body class="flex flex-col overflow-hidden bg-slate-50 text-slate-900">
 
   <!-- ========================================================= -->
+  <!-- TOAST NOTIFICHE REALTIME & PUSH IN-APP                     -->
+  <!-- ========================================================= -->
+  <div id="toastNotification" class="hidden fixed top-3 left-3 right-3 sm:left-auto sm:right-4 sm:max-w-md z-50 bg-slate-900/95 text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md flex items-start gap-3 transform -translate-y-4 opacity-0 transition-all duration-300 pointer-events-auto">
+    <div id="toastIconContainer" class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 text-sm">
+      <i class="fa-solid fa-bell"></i>
+    </div>
+    <div class="flex-1 min-w-0">
+      <h4 id="toastTitle" class="text-xs font-black text-white truncate">Notifica</h4>
+      <p id="toastBody" class="text-[11px] text-slate-300 mt-0.5 leading-snug"></p>
+    </div>
+    <button onclick="dismissToast()" class="text-slate-400 hover:text-white p-1">
+      <i class="fa-solid fa-xmark text-xs"></i>
+    </button>
+  </div>
+
+  <!-- ========================================================= -->
   <!-- 1. SCHERMATA DI BLOCCO LOGIN OBBLIGATORIO CON GOOGLE      -->
   <!-- ========================================================= -->
   <div id="authGateScreen" class="fixed inset-0 bg-white z-50 flex flex-col justify-between p-6 ios-safe-top ios-safe-bottom">
@@ -286,6 +302,15 @@
 
       <!-- Azioni rapide header -->
       <div class="flex items-center gap-2 shrink-0">
+        <button id="managerSwitchBtn" onclick="toggleManagerPerspective()" class="hidden text-[10px] font-black px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 active:scale-95 transition">
+          <i class="fa-solid fa-repeat mr-1"></i><span id="managerSwitchText">Vista Mappa</span>
+        </button>
+
+        <button onclick="toggleNotificationCenter()" id="notificationBellBtn" title="Centro Notifiche" class="relative w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition">
+          <i class="fa-solid fa-bell text-xs"></i>
+          <span id="notificationBadge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">0</span>
+        </button>
+
         <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live
         </span>
@@ -398,6 +423,22 @@
         </div>
       </div>
 
+      <!-- Stato Notifiche Push (FCM) -->
+      <div class="bg-indigo-50/70 border border-indigo-200 rounded-2xl p-3 space-y-2 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-indigo-950 flex items-center gap-1.5">
+            <i class="fa-solid fa-bell text-indigo-600"></i> Notifiche Push (FCM)
+          </span>
+          <span id="pushStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">Verifica...</span>
+        </div>
+        <p class="text-[11px] text-indigo-800 leading-snug">
+          Ricevi notifiche istantanee quando un giocatore si ritira, si libera un posto o vieni inserito dalla lista d'attesa.
+        </p>
+        <button id="accountPushToggleBtn" onclick="requestPushPermissionDirect()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition">
+          <i class="fa-solid fa-satellite-dish"></i> <span>Abilita Notifiche Push</span>
+        </button>
+      </div>
+
       <div class="pt-2 space-y-2.5">
         <button onclick="updateAccountProfile()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 rounded-xl text-xs shadow-sm">
           Salva Modifiche Profilo
@@ -447,6 +488,21 @@
 
     <!-- Calendario Slot dei Campi del Suo Centro Sportivo -->
     <div id="mgrPitchesContainer" class="space-y-4"></div>
+
+    <!-- Giocatori in Lista d'Attesa per questo Centro Sportivo -->
+    <div id="mgrWaitingListSection" class="bg-white border border-amber-200 rounded-3xl p-4 space-y-3 shadow-xs">
+      <div class="flex items-center justify-between border-b border-amber-100 pb-2">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-user-clock text-amber-600"></i>
+            Giocatori in Lista d'Attesa per la tua Struttura
+          </h3>
+          <p class="text-[11px] text-slate-500">Giocatori disponibili a subentrare o giocare nei tuoi campi</p>
+        </div>
+        <span id="mgrWaitingListBadge" class="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-200 px-2.5 py-0.5 rounded-full shrink-0">0 in attesa</span>
+      </div>
+      <div id="mgrWaitingListContainer" class="space-y-2"></div>
+    </div>
 
     <div class="pt-4 border-t border-slate-200 flex justify-center">
       <button onclick="logoutUser()" class="bg-white text-rose-600 border border-rose-200 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-2xs">
@@ -737,6 +793,116 @@
   </div>
 
   <!-- ========================================================= -->
+  <!-- MODAL: LISTA D'ATTESA CENTRO SPORTIVO                     -->
+  <!-- ========================================================= -->
+  <div id="venueWaitingListModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white border border-slate-200 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 text-xs ios-safe-bottom shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-user-clock text-emerald-600"></i>
+          Lista d'Attesa Centro Sportivo
+        </h3>
+        <button onclick="closeVenueWaitingListModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-slate-700 font-semibold mb-1">Centro Sportivo</label>
+          <input type="text" id="vwVenueName" disabled class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold" />
+          <input type="hidden" id="vwVenueId" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Giorno di Disponibilità</label>
+            <select id="vwDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold"></select>
+          </div>
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Fascia Oraria</label>
+            <select id="vwTimePreference" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold">
+              <option value="ANY">Qualsiasi orario</option>
+              <option value="EVENING" selected>Serale (19:00 - 21:00)</option>
+              <option value="NIGHT">Tardo serale (21:00 - 22:30)</option>
+              <option value="AFTERNOON">Pomeriggio (17:00 - 19:00)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Formato</label>
+            <select id="vwFormat" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold">
+              <option value="ANY">Entrambi (C5 o C8)</option>
+              <option value="C5">Solo Calcio a 5</option>
+              <option value="C8">Solo Calciotto</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Ruolo in Campo</label>
+            <select id="vwRole" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold">
+              <option value="POR">🧤 Portiere</option>
+              <option value="DIF">🛡️ Difensore</option>
+              <option value="CEN" selected>⚙️ Centrocampista</option>
+              <option value="ATT">⚡ Attaccante</option>
+              <option value="ANY">🏃 Qualsiasi Ruolo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-[11px] text-emerald-800 leading-snug">
+          <i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>
+          Appena una squadra cerca un giocatore in questo centro o un posto si libera per i tuoi parametri, riceverai una notifica push e il tuo contatto sarà proposto all'organizzatore!
+        </div>
+      </div>
+
+      <div class="pt-2 flex gap-2">
+        <button onclick="closeVenueWaitingListModal()" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs">
+          Annulla
+        </button>
+        <button onclick="submitVenueWaitingList()" class="w-2/3 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 rounded-xl text-xs shadow-md">
+          Conferma Iscrizione
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: CENTRO NOTIFICHE PUSH & REALTIME                   -->
+  <!-- ========================================================= -->
+  <div id="notificationCenterModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white border border-slate-200 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[85dvh] flex flex-col overflow-hidden ios-safe-bottom shadow-2xl">
+      <div class="px-4 py-3.5 border-b border-slate-200 flex items-center justify-between shrink-0">
+        <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-bell text-emerald-600"></i>
+          Notifiche Flegrea Match
+        </h3>
+        <div class="flex items-center gap-2">
+          <button onclick="markAllNotificationsAsRead()" class="text-[11px] font-bold text-slate-500 hover:text-emerald-600">
+            Segna lette
+          </button>
+          <button onclick="toggleNotificationCenter()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="pushPermissionPrompt" class="p-3 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between text-xs">
+        <div>
+          <span class="font-bold text-indigo-950 block">Notifiche Push</span>
+          <span class="text-[11px] text-indigo-700">Ricevi avvisi anche ad app chiusa</span>
+        </div>
+        <button onclick="requestPushPermissionDirect()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-3 py-1.5 rounded-xl shadow-xs text-xs">
+          Abilita
+        </button>
+      </div>
+
+      <div id="notificationListContainer" class="p-4 overflow-y-auto space-y-2.5 flex-1"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
   <!-- FIREBASE SDK MODULARE & AUTENTICAZIONE PERSISTENTE        -->
   <!-- ========================================================= -->
   <script type="module">
@@ -758,8 +924,15 @@
       getDoc,
       setDoc,
       updateDoc,
+      deleteDoc,
       onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import {
+      getMessaging,
+      getToken,
+      onMessage,
+      isSupported
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyColTKRZe5tZvxbwqE5Y86g61anuuz3BKc",
@@ -777,9 +950,26 @@
 
     setPersistence(auth, browserLocalPersistence).catch(() => {});
 
+    let messaging = null;
+    isSupported().then((supported) => {
+      if (supported) {
+        try {
+          messaging = getMessaging(app);
+          window.FB.messaging = messaging;
+        } catch (e) {
+          console.warn("FCM init:", e);
+        }
+      }
+    }).catch(() => {});
+
     window.FB = {
       auth,
       db,
+      messaging,
+      getMessaging,
+      getToken,
+      onMessage,
+      isSupported,
       GoogleAuthProvider,
       signInWithPopup,
       signInWithRedirect,
@@ -789,6 +979,7 @@
       getDoc,
       setDoc,
       updateDoc,
+      deleteDoc,
       onSnapshot
     };
 
@@ -819,7 +1010,7 @@
         address: "Via Amedeo 92, Monte di Procida",
         lat: 40.80373,
         lng: 14.04886,
-        managerEmails: [],
+        managerEmails: ["flegreamatch@gmail.com"],
         pitches: [
           { id: "innaro_c1", name: "Campo 1 (C5)", format: "C5", maxPlayers: 10 },
           { id: "innaro_c2", name: "Campo 2 (C5)", format: "C5", maxPlayers: 10 }
@@ -959,9 +1150,15 @@
     let bookings = [];
     let allUsersList = [];
     let venueContactsMap = {};
+    let waitingList = [];
+    let userNotifications = [];
     let unsubBookings = null;
     let unsubUsers = null;
     let unsubVenueContacts = null;
+    let unsubWaitingList = null;
+    let unsubNotifications = null;
+    let currentSelectedVenueId = null;
+    let isManagerPerspectiveMap = false;
 
     let mapInstance = null;
     let currentTileLayer = null;
@@ -1078,11 +1275,13 @@
 
     function detectUserRoleByEmail(email) {
       const cleanEmail = String(email || "").toLowerCase().trim();
-      if (ADMIN_EMAILS.includes(cleanEmail)) {
+      if (!cleanEmail) return { accountType: "PLAYER", managedVenueId: null };
+
+      if (ADMIN_EMAILS.some(e => String(e || "").toLowerCase().trim() === cleanEmail)) {
         return { accountType: "SUPER_ADMIN", managedVenueId: null };
       }
       for (const venue of VENUES_CONFIG) {
-        const mgrList = (venue.managerEmails || []).map(e => e.toLowerCase().trim());
+        const mgrList = (venue.managerEmails || []).map(e => String(e || "").toLowerCase().trim());
         if (mgrList.includes(cleanEmail)) {
           return { accountType: "MANAGER", managedVenueId: venue.id };
         }
@@ -1094,12 +1293,34 @@
       const email = (firebaseUser.email || "").toLowerCase().trim();
       const roleInfo = detectUserRoleByEmail(email);
 
+      // 1. CARICAMENTO ULTRA-RAPIDO DA CACHE LOCALE (elimina attesa di 1-2 min!)
+      const cacheKey = "flegrea_user_" + firebaseUser.uid;
       let savedProfile = null;
       try {
-        const snap = await window.FB.getDoc(window.FB.doc(window.FB.db, "users", firebaseUser.uid));
-        if (snap.exists()) savedProfile = snap.data();
-      } catch (e) {
-        console.warn("Lettura profilo Firestore:", e);
+        const cachedRaw = localStorage.getItem(cacheKey);
+        if (cachedRaw) savedProfile = JSON.parse(cachedRaw);
+      } catch (e) {}
+
+      // 2. LETTURA FIRESTORE CON TIMEOUT PROTETTO (max 2 secondi)
+      if (!savedProfile) {
+        try {
+          const fetchPromise = window.FB.getDoc(window.FB.doc(window.FB.db, "users", firebaseUser.uid));
+          const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 2000));
+          const snap = await Promise.race([fetchPromise, timeoutPromise]);
+          if (snap && snap.exists && snap.exists()) {
+            savedProfile = snap.data();
+            localStorage.setItem(cacheKey, JSON.stringify(savedProfile));
+          }
+        } catch (e) {
+          console.warn("Lettura profilo Firestore:", e);
+        }
+      } else {
+        // Sincronizzazione profilo in background senza bloccare l'interfaccia
+        window.FB.getDoc(window.FB.doc(window.FB.db, "users", firebaseUser.uid)).then(snap => {
+          if (snap && snap.exists()) {
+            localStorage.setItem(cacheKey, JSON.stringify(snap.data()));
+          }
+        }).catch(() => {});
       }
 
       currentUser = {
@@ -1116,6 +1337,7 @@
 
       document.getElementById("authGateScreen").classList.add("hidden");
       startRealtimeCloudListeners();
+      initPushNotifications();
 
       if (!currentUser.onboardingDone) {
         if (currentUser.accountType === "MANAGER") {
@@ -1156,6 +1378,9 @@
         ...currentUser,
         updatedAt: new Date().toISOString()
       });
+      try {
+        localStorage.setItem("flegrea_user_" + currentUser.id, JSON.stringify(currentUser));
+      } catch (e) {}
 
       document.getElementById("playerOnboardingModal").classList.add("hidden");
       launchRoleInterface();
@@ -1180,6 +1405,9 @@
         ...currentUser,
         updatedAt: new Date().toISOString()
       });
+      try {
+        localStorage.setItem("flegrea_user_" + currentUser.id, JSON.stringify(currentUser));
+      } catch (e) {}
 
       if (currentUser.managedVenueId) {
         await window.FB.setDoc(window.FB.doc(window.FB.db, "venue_contacts", currentUser.managedVenueId), {
@@ -1211,6 +1439,7 @@
     function launchRoleInterface() {
       const roleBadge = document.getElementById("roleHeaderBadge");
       const userSub = document.getElementById("userBadgeText");
+      const managerSwitchBtn = document.getElementById("managerSwitchBtn");
 
       initDateSelects();
 
@@ -1220,6 +1449,7 @@
         roleBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 shrink-0";
         userSub.textContent = `${myVenue ? myVenue.name : ''} • ${currentUser.name}`;
 
+        if (managerSwitchBtn) managerSwitchBtn.classList.remove("hidden");
         document.getElementById("playerBottomNav").classList.add("hidden");
         document.getElementById("viewMap").classList.add("hidden");
         document.getElementById("viewMyMatches").classList.add("hidden");
@@ -1231,6 +1461,7 @@
         return;
       }
 
+      if (managerSwitchBtn) managerSwitchBtn.classList.add("hidden");
       document.getElementById("playerBottomNav").classList.remove("hidden");
       document.getElementById("viewManagerExclusive").classList.add("hidden");
 
@@ -1255,6 +1486,34 @@
       switchTab("MAP");
     }
 
+    function toggleManagerPerspective() {
+      if (currentUser.accountType !== "MANAGER") return;
+      const mgrView = document.getElementById("viewManagerExclusive");
+      const mapView = document.getElementById("viewMap");
+      const nav = document.getElementById("playerBottomNav");
+      const btnText = document.getElementById("managerSwitchText");
+
+      if (mgrView.classList.contains("hidden")) {
+        // Ritorna al gestionale esclusivo
+        mgrView.classList.remove("hidden");
+        mapView.classList.add("hidden");
+        nav.classList.add("hidden");
+        btnText.textContent = "Vista Mappa";
+        renderExclusiveManagerSchedule();
+      } else {
+        // Passa alla mappa per vedere la prospettiva giocatore
+        mgrView.classList.add("hidden");
+        mapView.classList.remove("hidden");
+        btnText.textContent = "Torna al Gestionale";
+        if (!mapInstance) {
+          initMap();
+        } else {
+          setTimeout(() => mapInstance.invalidateSize(), 200);
+          renderMapMarkers();
+        }
+      }
+    }
+
     function startRealtimeCloudListeners() {
       if (unsubBookings) unsubBookings();
       unsubBookings = window.FB.onSnapshot(window.FB.collection(window.FB.db, "bookings"), (snapshot) => {
@@ -1266,6 +1525,9 @@
         if (!document.getElementById("viewMyMatches").classList.contains("hidden")) renderMyMatches();
         if (!document.getElementById("viewManagerExclusive").classList.contains("hidden")) renderExclusiveManagerSchedule();
         if (!document.getElementById("viewSuperAdmin").classList.contains("hidden")) renderSuperAdminPanel();
+        if (currentSelectedVenueId && !document.getElementById("venueSheet").classList.contains("translate-y-full")) {
+          openVenueSheet(currentSelectedVenueId);
+        }
       });
 
       if (unsubVenueContacts) unsubVenueContacts();
@@ -1276,6 +1538,56 @@
         });
         if (!document.getElementById("viewManagerExclusive").classList.contains("hidden")) renderExclusiveManagerSchedule();
         if (!document.getElementById("viewSuperAdmin").classList.contains("hidden")) renderSuperAdminPanel();
+      });
+
+      // Listener per la Lista d'Attesa (Partite e Centri Sportivi)
+      if (unsubWaitingList) unsubWaitingList();
+      unsubWaitingList = window.FB.onSnapshot(window.FB.collection(window.FB.db, "waiting_list"), (snapshot) => {
+        const list = [];
+        snapshot.forEach((docSnap) => list.push({ id: docSnap.id, ...docSnap.data() }));
+        waitingList = list;
+        updatePendingRequestsBadge();
+        if (!document.getElementById("viewMyMatches").classList.contains("hidden")) renderMyMatches();
+        if (!document.getElementById("viewManagerExclusive").classList.contains("hidden")) renderExclusiveManagerSchedule();
+        if (currentSelectedVenueId && !document.getElementById("venueSheet").classList.contains("translate-y-full")) {
+          openVenueSheet(currentSelectedVenueId);
+        }
+      });
+
+      // Listener per le Notifiche Utente Realtime
+      if (unsubNotifications) unsubNotifications();
+      let notifInitialLoad = true;
+      unsubNotifications = window.FB.onSnapshot(window.FB.collection(window.FB.db, "notifications"), (snapshot) => {
+        const list = [];
+        let newNotification = null;
+        snapshot.forEach(docSnap => {
+          const d = docSnap.data();
+          if (currentUser && d.recipientUserId === currentUser.id) {
+            list.push({ id: docSnap.id, ...d });
+          }
+        });
+
+        if (!notifInitialLoad && currentUser) {
+          snapshot.docChanges().forEach(change => {
+            if (change.type === "added") {
+              const d = change.doc.data();
+              if (d.recipientUserId === currentUser.id && !d.read) {
+                newNotification = d;
+              }
+            }
+          });
+        }
+        notifInitialLoad = false;
+
+        list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+        userNotifications = list;
+        updateNotificationBellBadge();
+        if (newNotification) {
+          triggerRealtimeAlert(newNotification.title, newNotification.body, newNotification.type);
+        }
+        if (!document.getElementById("notificationCenterModal").classList.contains("hidden")) {
+          renderNotificationCenterList();
+        }
       });
 
       if (currentUser && currentUser.accountType === "SUPER_ADMIN") {
@@ -1421,6 +1733,7 @@
     function openVenueSheet(venueId) {
       const venue = VENUES_CONFIG.find(v => v.id === venueId);
       if (!venue) return;
+      currentSelectedVenueId = venueId;
 
       const formatFilter = document.getElementById("filterFormat").value;
       const roleFilter = document.getElementById("filterRole").value;
@@ -1451,6 +1764,29 @@
            </div>`
         : "";
 
+      // Striscia Lista d'Attesa Centro Sportivo
+      const myVenueWaiting = waitingList.find(w => w.type === "VENUE" && w.venueId === venue.id && w.userId === currentUser.id && w.status === "ACTIVE");
+      const venueWaitingCount = waitingList.filter(w => w.type === "VENUE" && w.venueId === venue.id && w.status === "ACTIVE").length;
+      const waitingListStrip = myVenueWaiting
+        ? `<div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-center justify-between text-xs">
+             <div class="space-y-0.5">
+               <span class="font-bold text-amber-950 flex items-center gap-1.5"><i class="fa-solid fa-bell text-amber-600"></i> Iscritto alla Lista d'Attesa del Centro</span>
+               <p class="text-[11px] text-amber-700">Riceverai una notifica push appena si libera un posto o viene creata una partita per ${ROLE_LABELS[myVenueWaiting.userRole || 'ANY']}.</p>
+             </div>
+             <button onclick="leaveWaitingList('${myVenueWaiting.id}')" class="bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1.5 rounded-xl font-bold shrink-0 text-xs active:scale-95 transition">
+               Annulla
+             </button>
+           </div>`
+        : `<div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-3 flex items-center justify-between gap-2 text-xs">
+             <div>
+               <span class="font-bold text-emerald-950 flex items-center gap-1.5"><i class="fa-solid fa-user-clock text-emerald-600"></i> Lista d'Attesa Centro Sportivo</span>
+               <p class="text-[11px] text-emerald-700">Disponibile a giocare in questa struttura? (${venueWaitingCount} in attesa)</p>
+             </div>
+             <button onclick="openVenueWaitingListModal('${venue.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3 py-2 rounded-xl shrink-0 shadow-xs active:scale-95 transition">
+               + Iscriviti
+             </button>
+           </div>`;
+
       let matchesHtml = "";
       if (activeMatches.length === 0) {
         matchesHtml = `
@@ -1467,8 +1803,25 @@
             ? `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md text-[10px] font-bold">⚡ LIBERA</span>`
             : `<span class="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold">🔒 SU ACCETTAZIONE</span>`;
 
+          const isOrganizer = currentUser && m.organizerId === currentUser.id;
+          const isUserAlreadyInMatch = (m.slots || []).some(s => s.player && s.player.userId === currentUser.id);
+
           const slotsHtml = (m.slots || []).map(slot => {
             if (slot.status === "OCCUPIED") {
+              const isMe = slot.player && slot.player.userId === currentUser.id;
+              if (isMe) {
+                return `
+                  <div class="bg-emerald-50 border border-emerald-300 rounded-xl p-2.5 flex items-center justify-between">
+                    <div>
+                      <span class="text-xs font-bold text-emerald-800">${ROLE_LABELS[slot.role]}</span>
+                      <span class="text-[11px] font-bold text-emerald-600 block">✓ Tu (${escapeHtml(slot.player.userName)})</span>
+                    </div>
+                    <button onclick="leaveMatch('${m.id}', '${slot.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold px-2.5 py-1.5 rounded-xl active:scale-95 transition">
+                      ✕ Annulla partecipazione
+                    </button>
+                  </div>
+                `;
+              }
               return `
                 <div class="bg-slate-100 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between opacity-75">
                   <span class="text-xs font-semibold text-slate-500">${ROLE_LABELS[slot.role]}</span>
@@ -1477,12 +1830,45 @@
               `;
             }
 
+            // Slot Aperto
+            if (isOrganizer) {
+              return `
+                <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between">
+                  <div>
+                    <span class="text-xs font-bold text-slate-900 block">${ROLE_LABELS[slot.role]}</span>
+                    <span class="text-[10px] text-slate-500">Posto mancante</span>
+                  </div>
+                  <span class="bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-bold px-2.5 py-1 rounded-lg">👑 La tua partita</span>
+                </div>
+              `;
+            }
+
             const alreadyRequested = (slot.requests || []).some(r => r.userId === currentUser.id && r.status === "PENDING");
-            const actionBtn = alreadyRequested
-              ? `<span class="bg-amber-100 text-amber-800 text-[11px] font-bold px-3 py-1.5 rounded-lg">⏳ In attesa</span>`
-              : `<button onclick="handleSlotAction('${m.id}', '${slot.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl shadow-2xs">
-                   ${m.joinMode === "FREE" ? "Entra subito" : "Invia richiesta"}
-                 </button>`;
+            if (alreadyRequested) {
+              return `
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5 flex items-center justify-between">
+                  <div>
+                    <span class="text-xs font-bold text-amber-900 block">${ROLE_LABELS[slot.role]}</span>
+                    <span class="text-[10px] text-amber-700">Richiesta in attesa di risposta</span>
+                  </div>
+                  <button onclick="cancelMatchRequest('${m.id}', '${slot.id}')" class="bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold px-2.5 py-1.5 rounded-xl active:scale-95 transition">
+                    ✕ Annulla richiesta
+                  </button>
+                </div>
+              `;
+            }
+
+            if (isUserAlreadyInMatch) {
+              return `
+                <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between">
+                  <div>
+                    <span class="text-xs font-bold text-slate-900 block">${ROLE_LABELS[slot.role]}</span>
+                    <span class="text-[10px] text-slate-500">Posto mancante</span>
+                  </div>
+                  <span class="text-[11px] font-bold text-emerald-600">Sei già confermato</span>
+                </div>
+              `;
+            }
 
             return `
               <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between">
@@ -1490,7 +1876,9 @@
                   <span class="text-xs font-bold text-slate-900 block">${ROLE_LABELS[slot.role]}</span>
                   <span class="text-[10px] text-slate-500">Posto mancante</span>
                 </div>
-                ${actionBtn}
+                <button onclick="handleSlotAction('${m.id}', '${slot.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl shadow-2xs active:scale-95 transition">
+                  ${m.joinMode === "FREE" ? "Entra subito" : "Invia richiesta"}
+                </button>
               </div>
             `;
           }).join("");
@@ -1499,6 +1887,22 @@
             m.organizerPhone,
             `Ciao ${m.organizerName}! Ho visto su Flegrea Match la tua partita di ${m.format === "C5" ? "Calcio a 5" : "Calciotto"} a ${venue.name} (${m.pitchName}) del ${m.date} ore ${m.startTime}.`
           );
+
+          // Pulsante Lista d'Attesa Specifica per questa Partita
+          let matchWaitHtml = "";
+          if (!isOrganizer && !isUserAlreadyInMatch) {
+            const myMatchWait = waitingList.find(w => w.type === "MATCH" && w.matchId === m.id && w.userId === currentUser.id && w.status === "ACTIVE");
+            matchWaitHtml = myMatchWait
+              ? `<div class="bg-sky-50 border border-sky-200 rounded-xl p-2 flex items-center justify-between text-xs">
+                   <span class="font-bold text-sky-950 flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-sky-600"></i> In Lista d'Attesa per questa partita</span>
+                   <button onclick="leaveWaitingList('${myMatchWait.id}')" class="text-rose-600 font-bold hover:underline">Esci</button>
+                 </div>`
+              : `<div class="flex justify-end">
+                   <button onclick="joinMatchWaitingList('${m.id}')" class="text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5 active:scale-95 transition">
+                     <i class="fa-solid fa-user-clock"></i> Mettiti in lista d'attesa per questa partita
+                   </button>
+                 </div>`;
+          }
 
           return `
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-3">
@@ -1523,6 +1927,8 @@
 
               <div class="space-y-2">${slotsHtml}</div>
 
+              ${matchWaitHtml}
+
               <div class="pt-1 flex justify-end">
                 <a href="${waLink}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:underline">
                   <i class="fa-brands fa-whatsapp text-base"></i> Scrivi a ${escapeHtml(m.organizerName)} su WhatsApp
@@ -1546,6 +1952,7 @@
         </div>
 
         ${contactStrip}
+        ${waitingListStrip}
 
         <div class="border-t border-slate-200 pt-3 space-y-2.5">
           <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Partite in cerca di giocatori (${activeMatches.length})</h4>
@@ -1565,6 +1972,19 @@
     async function handleSlotAction(matchId, slotId) {
       const match = bookings.find(b => b.id === matchId);
       if (!match) return;
+
+      // Bug 1 Fix: Il creatore non può candidarsi alla propria partita
+      if (match.organizerId === currentUser.id) {
+        alert("Sei già l'organizzatore di questa partita! Non puoi candidarti come giocatore mancante.");
+        return;
+      }
+
+      const isAlreadyIn = (match.slots || []).some(s => s.player && s.player.userId === currentUser.id);
+      if (isAlreadyIn) {
+        alert("Fai già parte di questa partita in un altro slot!");
+        return;
+      }
+
       if (isTimeSlotPast(match.date, match.startTime)) {
         alert("Questa partita è già iniziata o trascorsa!");
         openVenueSheet(match.venueId);
@@ -1581,6 +2001,15 @@
           userPhone: currentUser.phone
         };
         await window.FB.updateDoc(window.FB.doc(window.FB.db, "bookings", match.id), { slots: match.slots });
+        if (match.organizerId) {
+          await dispatchNotification({
+            recipientUserId: match.organizerId,
+            title: "⚡ Nuovo giocatore entrato!",
+            body: `${currentUser.name} è entrato nella tua partita del ${match.date} ore ${match.startTime}!`,
+            type: "PLAYER_JOINED",
+            matchId: match.id
+          });
+        }
         openVenueSheet(match.venueId);
         alert(`Sei entrato nella partita delle ${match.startTime}!`);
       } else {
@@ -1593,6 +2022,15 @@
           status: "PENDING"
         });
         await window.FB.updateDoc(window.FB.doc(window.FB.db, "bookings", match.id), { slots: match.slots });
+        if (match.organizerId) {
+          await dispatchNotification({
+            recipientUserId: match.organizerId,
+            title: "🙋 Nuova richiesta giocatore",
+            body: `${currentUser.name} ha chiesto di unirsi alla tua partita del ${match.date} ore ${match.startTime}!`,
+            type: "NEW_JOIN_REQUEST",
+            matchId: match.id
+          });
+        }
         openVenueSheet(match.venueId);
         alert(`Richiesta inviata a ${match.organizerName}!`);
       }
@@ -1875,103 +2313,186 @@
         return isOrganizer || isParticipant;
       });
 
+      const myActiveWaitings = waitingList.filter(w => w.userId === currentUser.id && w.status === "ACTIVE");
+
+      let matchesHtml = "";
       if (myItems.length === 0) {
-        container.innerHTML = `
+        matchesHtml = `
           <div class="bg-white border border-slate-200 rounded-2xl p-6 text-center space-y-2 shadow-2xs">
-            <p class="text-sm font-bold text-slate-900">Nessuna prenotazione attiva</p>
+            <p class="text-sm font-bold text-slate-900">Nessuna partita attiva</p>
             <p class="text-xs text-slate-500">Prenota un campo o unisciti a una partita dalla mappa dei Campi Flegrei.</p>
           </div>
         `;
-        return;
-      }
+      } else {
+        matchesHtml = myItems.map(b => {
+          const venue = VENUES_CONFIG.find(v => v.id === b.venueId);
+          const isOrganizer = b.organizerId === currentUser.id;
+          const mySlot = (b.slots || []).find(s => s.player && s.player.userId === currentUser.id);
+          const myPendingSlot = (b.slots || []).find(s => (s.requests || []).some(r => r.userId === currentUser.id && r.status === "PENDING"));
 
-      container.innerHTML = myItems.map(b => {
-        const venue = VENUES_CONFIG.find(v => v.id === b.venueId);
-        const isOrganizer = b.organizerId === currentUser.id;
-
-        let slotsManagementHtml = "";
-        if (b.needsPlayers) {
-          slotsManagementHtml = (b.slots || []).map(s => {
-            if (s.status === "OCCUPIED") {
-              const waPlayer = buildWhatsAppLink(
-                s.player.userPhone,
-                `Ciao ${s.player.userName}! Ti scrivo per la partita a ${venue ? venue.name : ''} delle ${b.startTime}.`
-              );
-              return `
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between text-xs">
-                  <div>
-                    <span class="font-bold text-emerald-600">✓ ${ROLE_LABELS[s.role]}</span>
-                    <span class="text-slate-700 font-medium ml-1">• ${escapeHtml(s.player.userName)}</span>
+          let slotsManagementHtml = "";
+          if (b.needsPlayers) {
+            slotsManagementHtml = (b.slots || []).map(s => {
+              if (s.status === "OCCUPIED") {
+                const isMe = s.player && s.player.userId === currentUser.id;
+                const waPlayer = buildWhatsAppLink(
+                  s.player.userPhone,
+                  `Ciao ${s.player.userName}! Ti scrivo per la partita a ${venue ? venue.name : ''} delle ${b.startTime}.`
+                );
+                return `
+                  <div class="bg-slate-50 border ${isMe ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'} rounded-xl p-2.5 flex items-center justify-between text-xs">
+                    <div>
+                      <span class="font-bold text-emerald-600">✓ ${ROLE_LABELS[s.role]}</span>
+                      <span class="text-slate-800 font-bold ml-1">• ${escapeHtml(s.player.userName)} ${isMe ? '(Tu)' : ''}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      ${!isMe ? `
+                        <a href="${waPlayer}" target="_blank" class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
+                          <i class="fa-brands fa-whatsapp"></i> Chat
+                        </a>
+                      ` : `
+                        <button onclick="leaveMatch('${b.id}', '${s.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg font-bold active:scale-95 transition">
+                          ✕ Ritirati
+                        </button>
+                      `}
+                    </div>
                   </div>
-                  <a href="${waPlayer}" target="_blank" class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
-                    <i class="fa-brands fa-whatsapp"></i> Chat
-                  </a>
+                `;
+              }
+
+              const pendingReqs = (s.requests || []).filter(r => r.status === "PENDING");
+              const isMyPending = pendingReqs.some(r => r.userId === currentUser.id);
+
+              const reqsHtml = isOrganizer && pendingReqs.length > 0
+                ? pendingReqs.map(r => {
+                    const waCand = buildWhatsAppLink(
+                      r.userPhone,
+                      `Ciao ${r.userName}! Ho visto la tua richiesta per giocare a ${venue ? venue.name : ''} alle ${b.startTime}.`
+                    );
+                    return `
+                      <div class="mt-2 bg-amber-50/70 border border-amber-200 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                        <div>
+                          <span class="text-xs font-bold text-slate-900 block">Candidato: ${escapeHtml(r.userName)}</span>
+                          <a href="${waCand}" target="_blank" class="text-[11px] text-emerald-600 font-semibold inline-flex items-center gap-1">
+                            <i class="fa-brands fa-whatsapp"></i> Contatta su WhatsApp
+                          </a>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <button onclick="decideRequest('${b.id}','${s.id}','${r.userId}', true)" class="bg-emerald-500 text-white font-extrabold text-xs px-2.5 py-1.5 rounded-lg active:scale-95 transition">
+                            ✓ Accetta
+                          </button>
+                          <button onclick="decideRequest('${b.id}','${s.id}','${r.userId}', false)" class="bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs px-2.5 py-1.5 rounded-lg active:scale-95 transition">
+                            ✕ Rifiuta
+                          </button>
+                        </div>
+                      </div>
+                    `;
+                  }).join("")
+                : (isMyPending ? `
+                    <div class="mt-1.5 flex items-center justify-between bg-amber-50 border border-amber-200 p-2 rounded-lg">
+                      <span class="text-[11px] text-amber-800 font-bold">La tua richiesta è in attesa di approvazione</span>
+                      <button onclick="cancelMatchRequest('${b.id}', '${s.id}')" class="text-rose-600 hover:text-rose-800 font-bold text-[11px] underline">
+                        Annulla
+                      </button>
+                    </div>
+                  ` : "");
+
+              return `
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-900">${ROLE_LABELS[s.role]}</span>
+                    <span class="text-[11px] text-amber-600 font-semibold">Ancora libero</span>
+                  </div>
+                  ${reqsHtml}
                 </div>
               `;
-            }
+            }).join("");
+          } else {
+            slotsManagementHtml = `<div class="text-xs text-emerald-700 font-semibold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">✓ Squadra al completo (${b.maxPlayers}/${b.maxPlayers})</div>`;
+          }
 
-            const pendingReqs = (s.requests || []).filter(r => r.status === "PENDING");
-            const reqsHtml = isOrganizer && pendingReqs.length > 0
-              ? pendingReqs.map(r => {
-                  const waCand = buildWhatsAppLink(
-                    r.userPhone,
-                    `Ciao ${r.userName}! Ho visto la tua richiesta per giocare a ${venue ? venue.name : ''} alle ${b.startTime}.`
-                  );
-                  return `
-                    <div class="mt-2 bg-amber-50/70 border border-amber-200 rounded-xl p-2.5 flex items-center justify-between gap-2">
-                      <div>
-                        <span class="text-xs font-bold text-slate-900 block">Candidato: ${escapeHtml(r.userName)}</span>
-                        <a href="${waCand}" target="_blank" class="text-[11px] text-emerald-600 font-semibold inline-flex items-center gap-1">
-                          <i class="fa-brands fa-whatsapp"></i> Contatta su WhatsApp
-                        </a>
-                      </div>
-                      <div class="flex items-center gap-1.5">
-                        <button onclick="decideRequest('${b.id}','${s.id}','${r.userId}', true)" class="bg-emerald-500 text-white font-extrabold text-xs px-2.5 py-1.5 rounded-lg">
-                          ✓ Accetta
-                        </button>
-                        <button onclick="decideRequest('${b.id}','${s.id}','${r.userId}', false)" class="bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs px-2.5 py-1.5 rounded-lg">
-                          ✕ Rifiuta
-                        </button>
-                      </div>
-                    </div>
-                  `;
-                }).join("")
-              : "";
-
-            return `
-              <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs">
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-slate-900">${ROLE_LABELS[s.role]}</span>
-                  <span class="text-[11px] text-amber-600 font-semibold">Ancora libero</span>
-                </div>
-                ${reqsHtml}
-              </div>
+          let actionTopBtn = "";
+          if (isOrganizer) {
+            actionTopBtn = `
+              <button onclick="cancelBooking('${b.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold px-3 py-1.5 rounded-xl active:scale-95 transition">
+                Disdici Campo
+              </button>
             `;
-          }).join("");
-        } else {
-          slotsManagementHtml = `<div class="text-xs text-emerald-700 font-semibold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">✓ Squadra al completo (${b.maxPlayers}/${b.maxPlayers})</div>`;
-        }
+          } else if (mySlot) {
+            actionTopBtn = `
+              <button onclick="leaveMatch('${b.id}', '${mySlot.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold px-3 py-1.5 rounded-xl active:scale-95 transition">
+                ✕ Annulla partecipazione
+              </button>
+            `;
+          } else if (myPendingSlot) {
+            actionTopBtn = `
+              <button onclick="cancelMatchRequest('${b.id}', '${myPendingSlot.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold px-3 py-1.5 rounded-xl active:scale-95 transition">
+                ✕ Annulla richiesta
+              </button>
+            `;
+          }
 
-        return `
-          <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-2xs">
-            <div class="flex items-start justify-between">
-              <div>
-                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${isOrganizer ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-sky-50 text-sky-700 border border-sky-200'}">
-                  ${isOrganizer ? 'Organizzatore (Tuo Campo)' : 'Partecipante'}
-                </span>
-                <h3 class="text-sm font-extrabold text-slate-900 mt-1">${escapeHtml(venue ? venue.name : '')} • ${escapeHtml(b.pitchName)}</h3>
-                <p class="text-xs text-slate-500">${escapeHtml(b.date)} • Orario: <strong class="text-slate-900">${escapeHtml(b.startTime)} - ${escapeHtml(b.endTime)}</strong></p>
+          return `
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-2xs">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${isOrganizer ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-sky-50 text-sky-700 border border-sky-200'}">
+                    ${isOrganizer ? 'Organizzatore (Tuo Campo)' : 'Partecipante'}
+                  </span>
+                  <h3 class="text-sm font-extrabold text-slate-900 mt-1">${escapeHtml(venue ? venue.name : '')} • ${escapeHtml(b.pitchName)}</h3>
+                  <p class="text-xs text-slate-500">${escapeHtml(b.date)} • Orario: <strong class="text-slate-900">${escapeHtml(b.startTime)} - ${escapeHtml(b.endTime)}</strong></p>
+                </div>
+                ${actionTopBtn}
               </div>
-              ${isOrganizer ? `
-                <button onclick="cancelBooking('${b.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold px-3 py-1.5 rounded-xl">
-                  Disdici Campo
-                </button>
-              ` : ''}
+              <div class="space-y-2">${slotsManagementHtml}</div>
             </div>
-            <div class="space-y-2">${slotsManagementHtml}</div>
+          `;
+        }).join("");
+      }
+
+      // Sezione Liste d'Attesa Attive dell'Utente (Centro Sportivo & Partite)
+      let waitingsHtml = "";
+      if (myActiveWaitings.length > 0) {
+        const items = myActiveWaitings.map(w => {
+          const venue = VENUES_CONFIG.find(v => v.id === w.venueId);
+          const venueTitle = venue ? venue.name : "Centro Sportivo";
+          const isMatchWaiting = w.type === "MATCH";
+
+          return `
+            <div class="bg-white border border-amber-200 rounded-2xl p-3.5 space-y-2 shadow-2xs">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                    ${isMatchWaiting ? '📋 Lista d\'Attesa Partita' : '📋 Lista d\'Attesa Centro'}
+                  </span>
+                  <h4 class="text-xs font-black text-slate-900 mt-1">${escapeHtml(venueTitle)}</h4>
+                  <p class="text-[11px] text-slate-500">
+                    ${isMatchWaiting
+                      ? `Partita del ${escapeHtml(w.date)} ore ${escapeHtml(w.startTime)} • Ruolo: ${ROLE_LABELS[w.userRole || 'ANY']}`
+                      : `Disponibilità: ${w.preferredDate === 'ANY' ? 'Sempre' : escapeHtml(w.preferredDate)} • Fascia: ${escapeHtml(w.timeSlotPreference || 'Qualsiasi')} • Ruolo: ${ROLE_LABELS[w.userRole || 'ANY']}`
+                    }
+                  </p>
+                </div>
+                <button onclick="leaveWaitingList('${w.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold px-2.5 py-1.5 rounded-xl shrink-0 active:scale-95 transition">
+                  ✕ Cancella
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        waitingsHtml = `
+          <div class="pt-4 border-t border-slate-200 space-y-2.5">
+            <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+              <i class="fa-solid fa-clock-rotate-left text-amber-600"></i>
+              Le Tue Liste d'Attesa Attive (${myActiveWaitings.length})
+            </h3>
+            <div class="space-y-2">${items}</div>
           </div>
         `;
-      }).join("");
+      }
+
+      container.innerHTML = matchesHtml + waitingsHtml;
     }
 
     async function decideRequest(matchId, slotId, candidateUserId, accept) {
@@ -1993,11 +2514,565 @@
         slot.requests.forEach(other => {
           if (other.userId !== candidateUserId) other.status = "REJECTED";
         });
+        await dispatchNotification({
+          recipientUserId: candidateUserId,
+          title: "✅ Candidatura Accettata!",
+          body: `L'organizzatore ha accettato la tua partecipazione alla partita del ${match.date} ore ${match.startTime}!`,
+          type: "REQUEST_ACCEPTED",
+          matchId: match.id
+        });
       } else {
         req.status = "REJECTED";
+        await dispatchNotification({
+          recipientUserId: candidateUserId,
+          title: "❌ Richiesta non accettata",
+          body: `La tua richiesta per la partita del ${match.date} ore ${match.startTime} non è stata accettata dall'organizzatore.`,
+          type: "REQUEST_REJECTED",
+          matchId: match.id
+        });
       }
 
       await window.FB.updateDoc(window.FB.doc(window.FB.db, "bookings", match.id), { slots: match.slots });
+    }
+
+    // Bug 2 Fix: Un utente può annullare la propria partecipazione
+    async function leaveMatch(matchId, slotId) {
+      const match = bookings.find(b => b.id === matchId);
+      if (!match) return;
+
+      if (!confirm(`Vuoi davvero annullare la tua partecipazione alla partita del ${match.date} alle ${match.startTime}? Il posto verrà liberato.`)) {
+        return;
+      }
+
+      const slot = (match.slots || []).find(s => s.id === slotId || (s.player && s.player.userId === currentUser.id));
+      if (!slot) return;
+
+      const leavingName = currentUser.name;
+      const freedRole = slot.role || "ANY";
+
+      // Controllo Lista d'Attesa: priorità 1: attesa partita, priorità 2: attesa centro
+      const matchWaiters = waitingList
+        .filter(w => w.status === "ACTIVE" && w.type === "MATCH" && w.matchId === match.id && w.userId !== currentUser.id)
+        .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+
+      const venueWaiters = waitingList
+        .filter(w => {
+          if (w.status !== "ACTIVE" || w.type !== "VENUE" || w.venueId !== match.venueId || w.userId === currentUser.id) return false;
+          if (w.preferredDate && w.preferredDate !== "ANY" && w.preferredDate !== match.date) return false;
+          if (w.format && w.format !== "ANY" && w.format !== match.format) return false;
+          if (w.userRole && w.userRole !== "ANY" && freedRole !== "ANY" && w.userRole !== freedRole) return false;
+          return true;
+        })
+        .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+
+      const candidate = matchWaiters[0] || venueWaiters[0];
+
+      if (candidate) {
+        // Assegnazione automatica del primo in lista d'attesa!
+        slot.status = "OCCUPIED";
+        slot.player = {
+          userId: candidate.userId,
+          userName: candidate.userName,
+          userPhone: candidate.userPhone
+        };
+
+        await window.FB.updateDoc(window.FB.doc(window.FB.db, "waiting_list", candidate.id), {
+          status: "FULFILLED",
+          fulfilledAt: new Date().toISOString(),
+          fulfilledMatchId: match.id
+        });
+
+        const v = VENUES_CONFIG.find(item => item.id === match.venueId);
+        const venueName = v ? v.name : "Centro Sportivo";
+
+        await dispatchNotification({
+          recipientUserId: candidate.userId,
+          title: "🎉 Sei entrato in campo dalla Lista d'Attesa!",
+          body: `Un posto si è liberato a ${venueName} il ${match.date} ore ${match.startTime}. Sei stato inserito automaticamente!`,
+          type: "WAITING_LIST_PROMOTED",
+          matchId: match.id
+        });
+
+        if (match.organizerId) {
+          await dispatchNotification({
+            recipientUserId: match.organizerId,
+            title: "🔄 Cambio giocatore automatico",
+            body: `${leavingName} si è ritirato. ${candidate.userName} è subentrato automaticamente dalla Lista d'Attesa!`,
+            type: "PARTICIPATION_SUBSTITUTED",
+            matchId: match.id
+          });
+        }
+      } else {
+        // Nessuno in lista d'attesa: slot torna libero
+        slot.status = "OPEN";
+        delete slot.player;
+
+        if (match.organizerId) {
+          await dispatchNotification({
+            recipientUserId: match.organizerId,
+            title: "⚠️ Un giocatore si è ritirato",
+            body: `${leavingName} ha annullato la partecipazione alla partita del ${match.date} ore ${match.startTime}. Lo slot è nuovamente aperto.`,
+            type: "PARTICIPATION_CANCELLED",
+            matchId: match.id
+          });
+        }
+
+        // Avvisa i giocatori in lista d'attesa centro che c'è un posto
+        venueWaiters.slice(0, 3).forEach(async w => {
+          await dispatchNotification({
+            recipientUserId: w.userId,
+            title: "⚡ Posto libero nei Campi Flegrei!",
+            body: `Si è appena liberato un posto a ${match.pitchName} il ${match.date} ore ${match.startTime}! Entra subito.`,
+            type: "SLOT_FREED",
+            matchId: match.id
+          });
+        });
+      }
+
+      await window.FB.updateDoc(window.FB.doc(window.FB.db, "bookings", match.id), { slots: match.slots });
+      alert("Hai annullato la tua partecipazione con successo.");
+      if (currentSelectedVenueId) openVenueSheet(currentSelectedVenueId);
+      renderMyMatches();
+    }
+
+    // Bug 2 Fix: Un utente può annullare la propria richiesta in sospeso
+    async function cancelMatchRequest(matchId, slotId) {
+      const match = bookings.find(b => b.id === matchId);
+      if (!match) return;
+      if (!confirm("Vuoi annullare la tua richiesta di partecipazione per questa partita?")) return;
+
+      let changed = false;
+      (match.slots || []).forEach(slot => {
+        if (slotId && slot.id !== slotId) return;
+        if (slot.requests) {
+          const initialLen = slot.requests.length;
+          slot.requests = slot.requests.filter(r => r.userId !== currentUser.id || r.status !== "PENDING");
+          if (slot.requests.length !== initialLen) changed = true;
+        }
+      });
+
+      if (changed) {
+        await window.FB.updateDoc(window.FB.doc(window.FB.db, "bookings", match.id), { slots: match.slots });
+        alert("Richiesta di partecipazione annullata.");
+        if (currentSelectedVenueId) openVenueSheet(currentSelectedVenueId);
+        renderMyMatches();
+      }
+    }
+
+    /*************************************************************
+     * FUNZIONI LISTA D'ATTESA AUTOMATICA (CENTRO & PARTITA)
+     *************************************************************/
+    function openVenueWaitingListModal(venueId) {
+      closeVenueSheet();
+      const venue = VENUES_CONFIG.find(v => v.id === venueId) || VENUES_CONFIG[0];
+      if (!venue) return;
+
+      document.getElementById("vwVenueId").value = venue.id;
+      document.getElementById("vwVenueName").value = `${venue.name} (${venue.city})`;
+
+      const days = getNext7Days();
+      let dayOpts = `<option value="ANY" selected>Qualsiasi giorno (Sempre disponibile)</option>`;
+      days.forEach(d => {
+        dayOpts += `<option value="${d.iso}">${d.label}</option>`;
+      });
+      document.getElementById("vwDate").innerHTML = dayOpts;
+
+      if (currentUser && currentUser.role) {
+        document.getElementById("vwRole").value = currentUser.role;
+      }
+
+      document.getElementById("venueWaitingListModal").classList.remove("hidden");
+    }
+
+    function closeVenueWaitingListModal() {
+      document.getElementById("venueWaitingListModal").classList.add("hidden");
+    }
+
+    async function submitVenueWaitingList() {
+      if (!currentUser) return;
+      const venueId = document.getElementById("vwVenueId").value;
+      const venue = VENUES_CONFIG.find(v => v.id === venueId);
+      const preferredDate = document.getElementById("vwDate").value;
+      const timeSlotPreference = document.getElementById("vwTimePreference").value;
+      const format = document.getElementById("vwFormat").value;
+      const role = document.getElementById("vwRole").value;
+
+      const existing = waitingList.find(w => w.type === "VENUE" && w.venueId === venueId && w.userId === currentUser.id && w.status === "ACTIVE");
+      if (existing) {
+        alert("Sei già iscritto alla lista d'attesa di questo centro sportivo!");
+        closeVenueWaitingListModal();
+        return;
+      }
+
+      const entryId = `wait_${Date.now()}`;
+      const entry = {
+        id: entryId,
+        type: "VENUE",
+        targetId: venueId,
+        venueId: venueId,
+        matchId: null,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userPhone: currentUser.phone,
+        userRole: role,
+        preferredDate: preferredDate,
+        timeSlotPreference: timeSlotPreference,
+        format: format,
+        status: "ACTIVE",
+        createdAt: new Date().toISOString()
+      };
+
+      await window.FB.setDoc(window.FB.doc(window.FB.db, "waiting_list", entryId), entry);
+      closeVenueWaitingListModal();
+      alert(`Ti sei iscritto con successo alla Lista d'Attesa di ${venue ? venue.name : 'questo centro'}!`);
+      if (currentSelectedVenueId) openVenueSheet(currentSelectedVenueId);
+      renderMyMatches();
+    }
+
+    async function joinMatchWaitingList(matchId) {
+      if (!currentUser) return;
+      const match = bookings.find(b => b.id === matchId);
+      if (!match) return;
+
+      const existing = waitingList.find(w => w.type === "MATCH" && w.matchId === matchId && w.userId === currentUser.id && w.status === "ACTIVE");
+      if (existing) {
+        alert("Sei già nella lista d'attesa di questa specifica partita!");
+        return;
+      }
+
+      if (!confirm(`Vuoi metterti in lista d'attesa per la partita del ${match.date} alle ${match.startTime}? Se un giocatore si ritira, verrai inserito o contattato subito.`)) {
+        return;
+      }
+
+      const entryId = `wait_${Date.now()}`;
+      const entry = {
+        id: entryId,
+        type: "MATCH",
+        targetId: matchId,
+        matchId: match.id,
+        venueId: match.venueId,
+        date: match.date,
+        startTime: match.startTime,
+        format: match.format,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userPhone: currentUser.phone,
+        userRole: currentUser.role || "CEN",
+        status: "ACTIVE",
+        createdAt: new Date().toISOString()
+      };
+
+      await window.FB.setDoc(window.FB.doc(window.FB.db, "waiting_list", entryId), entry);
+      alert("Sei stato iscritto alla Lista d'Attesa di questa partita!");
+      if (currentSelectedVenueId) openVenueSheet(currentSelectedVenueId);
+      renderMyMatches();
+    }
+
+    async function leaveWaitingList(waitingListId) {
+      if (!confirm("Confermi di voler cancellare la tua iscrizione da questa lista d'attesa?")) return;
+      await window.FB.updateDoc(window.FB.doc(window.FB.db, "waiting_list", waitingListId), {
+        status: "CANCELLED",
+        cancelledAt: new Date().toISOString()
+      });
+      alert("Iscrizione alla lista d'attesa cancellata.");
+      if (currentSelectedVenueId) openVenueSheet(currentSelectedVenueId);
+      renderMyMatches();
+    }
+
+    /*************************************************************
+     * SISTEMA NOTIFICHE PUSH (FCM) & REALTIME IN-APP
+     *************************************************************/
+    async function initPushNotifications() {
+      updatePushStatusBadge();
+      if ("Notification" in window && Notification.permission === "granted") {
+        await registerFCMToken();
+      }
+      setupForegroundFCM();
+    }
+
+    function updatePushStatusBadge() {
+      const badge = document.getElementById("pushStatusBadge");
+      const btn = document.getElementById("accountPushToggleBtn");
+      const prompt = document.getElementById("pushPermissionPrompt");
+
+      if (!("Notification" in window)) {
+        if (badge) {
+          badge.textContent = "Non supportate";
+          badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600";
+        }
+        if (btn) btn.classList.add("hidden");
+        if (prompt) prompt.classList.add("hidden");
+        return;
+      }
+
+      if (Notification.permission === "granted") {
+        if (badge) {
+          badge.textContent = "✓ Attive (FCM)";
+          badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+        }
+        if (btn) {
+          btn.innerHTML = `<i class="fa-solid fa-check"></i> <span>Notifiche Push Attive</span>`;
+          btn.className = "w-full bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-default";
+          btn.disabled = true;
+        }
+        if (prompt) prompt.classList.add("hidden");
+      } else if (Notification.permission === "denied") {
+        if (badge) {
+          badge.textContent = "Bloccate dal browser";
+          badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300";
+        }
+        if (btn) {
+          btn.innerHTML = `<i class="fa-solid fa-lock"></i> <span>Abilita nei permessi del browser</span>`;
+          btn.disabled = true;
+        }
+        if (prompt) prompt.classList.add("hidden");
+      } else {
+        if (badge) {
+          badge.textContent = "Non attive";
+          badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
+        }
+        if (btn) {
+          btn.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> <span>Abilita Notifiche Push</span>`;
+          btn.disabled = false;
+        }
+        if (prompt) prompt.classList.remove("hidden");
+      }
+    }
+
+    async function requestPushPermissionDirect() {
+      if (!("Notification" in window)) {
+        alert("Questo browser non supporta le notifiche push di sistema.");
+        return;
+      }
+
+      try {
+        const permission = await Notification.requestPermission();
+        updatePushStatusBadge();
+        if (permission === "granted") {
+          await registerFCMToken();
+          triggerRealtimeAlert("Notifiche Push Attivate!", "Riceverai avvisi in tempo reale per partite, ritiri e liste d'attesa.", "INFO");
+        } else if (permission === "denied") {
+          alert("Hai negato il permesso per le notifiche. Puoi riabilitarle dalle impostazioni del tuo browser.");
+        }
+      } catch (err) {
+        console.warn("Errore richiesta permessi notifiche:", err);
+      }
+    }
+
+    async function registerFCMToken() {
+      if (!window.FB || !window.FB.messaging || !currentUser) return;
+      try {
+        const swReg = await navigator.serviceWorker.ready;
+        const token = await window.FB.getToken(window.FB.messaging, {
+          serviceWorkerRegistration: swReg
+        });
+        if (token) {
+          await window.FB.updateDoc(window.FB.doc(window.FB.db, "users", currentUser.id), {
+            fcmToken: token,
+            notificationsEnabled: true,
+            fcmUpdatedAt: new Date().toISOString()
+          }).catch(() => {});
+        }
+      } catch (err) {
+        console.warn("FCM getToken (VAPID key o browser restrizione):", err);
+      }
+    }
+
+    function setupForegroundFCM() {
+      if (window.FB && window.FB.messaging && window.FB.onMessage) {
+        try {
+          window.FB.onMessage(window.FB.messaging, (payload) => {
+            const title = (payload.notification && payload.notification.title) || (payload.data && payload.data.title) || "Flegrea Match";
+            const body = (payload.notification && payload.notification.body) || (payload.data && payload.data.body) || "Nuovo aggiornamento";
+            triggerRealtimeAlert(title, body, "FCM");
+          });
+        } catch (e) {}
+      }
+    }
+
+    async function dispatchNotification({ recipientUserId, title, body, type, matchId, venueId }) {
+      if (!recipientUserId || !window.FB || !window.FB.db) return;
+      try {
+        const notifDocRef = window.FB.doc(window.FB.collection(window.FB.db, "notifications"));
+        await window.FB.setDoc(notifDocRef, {
+          recipientUserId,
+          title,
+          body,
+          type: type || "INFO",
+          matchId: matchId || null,
+          venueId: venueId || null,
+          read: false,
+          createdAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn("Invio notifica:", err);
+      }
+    }
+
+    function triggerRealtimeAlert(title, body, type = "INFO") {
+      playNotificationChime();
+      if (navigator.vibrate) {
+        try { navigator.vibrate([150, 75, 150]); } catch (e) {}
+      }
+
+      showTopToast(title, body, type);
+
+      if ("Notification" in window && Notification.permission === "granted") {
+        try {
+          if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(reg => {
+              reg.showNotification(title, {
+                body,
+                icon: "./icon-192.png",
+                badge: "./icon-192.png",
+                vibrate: [150, 75, 150]
+              });
+            }).catch(() => new Notification(title, { body, icon: "./icon-192.png" }));
+          } else {
+            new Notification(title, { body, icon: "./icon-192.png" });
+          }
+        } catch (e) {}
+      }
+    }
+
+    let toastTimer = null;
+    function showTopToast(title, body, type = "INFO") {
+      const toast = document.getElementById("toastNotification");
+      if (!toast) return;
+
+      document.getElementById("toastTitle").textContent = title;
+      document.getElementById("toastBody").textContent = body;
+
+      const iconContainer = document.getElementById("toastIconContainer");
+      if (type.includes("PROMOTED") || type.includes("ACCEPTED") || type.includes("JOINED")) {
+        iconContainer.className = "w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 text-sm";
+        iconContainer.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+      } else if (type.includes("CANCEL") || type.includes("REJECTED")) {
+        iconContainer.className = "w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0 text-sm";
+        iconContainer.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
+      } else {
+        iconContainer.className = "w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center justify-center shrink-0 text-sm";
+        iconContainer.innerHTML = `<i class="fa-solid fa-bell"></i>`;
+      }
+
+      toast.classList.remove("hidden");
+      setTimeout(() => {
+        toast.classList.remove("-translate-y-4", "opacity-0");
+        toast.classList.add("translate-y-0", "opacity-100");
+      }, 10);
+
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        dismissToast();
+      }, 5500);
+    }
+
+    function dismissToast() {
+      const toast = document.getElementById("toastNotification");
+      if (!toast) return;
+      toast.classList.remove("translate-y-0", "opacity-100");
+      toast.classList.add("-translate-y-4", "opacity-0");
+      setTimeout(() => toast.classList.add("hidden"), 300);
+    }
+
+    function playNotificationChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.28);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      } catch (e) {}
+    }
+
+    function toggleNotificationCenter() {
+      const modal = document.getElementById("notificationCenterModal");
+      const isHidden = modal.classList.contains("hidden");
+      if (isHidden) {
+        modal.classList.remove("hidden");
+        renderNotificationCenterList();
+        updatePushStatusBadge();
+      } else {
+        modal.classList.add("hidden");
+      }
+    }
+
+    function renderNotificationCenterList() {
+      const container = document.getElementById("notificationListContainer");
+      if (!container) return;
+
+      if (!userNotifications || userNotifications.length === 0) {
+        container.innerHTML = `
+          <div class="py-8 text-center space-y-2">
+            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl mx-auto">
+              <i class="fa-regular fa-bell"></i>
+            </div>
+            <p class="text-xs font-bold text-slate-700">Nessuna notifica</p>
+            <p class="text-[11px] text-slate-400">Riceverai qui gli avvisi per partite, ritiri e posti liberati.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = userNotifications.map(n => {
+        let iconHtml = `<i class="fa-solid fa-bell text-sky-600"></i>`;
+        let borderClass = n.read ? "border-slate-200 bg-white" : "border-emerald-300 bg-emerald-50/40";
+
+        if (n.type.includes("PROMOTED") || n.type.includes("ACCEPTED") || n.type.includes("JOINED")) {
+          iconHtml = `<i class="fa-solid fa-circle-check text-emerald-600"></i>`;
+        } else if (n.type.includes("CANCEL") || n.type.includes("REJECTED")) {
+          iconHtml = `<i class="fa-solid fa-triangle-exclamation text-rose-500"></i>`;
+        }
+
+        const dateStr = n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+
+        return `
+          <div class="border ${borderClass} rounded-2xl p-3 flex items-start gap-2.5 transition">
+            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-sm mt-0.5">
+              ${iconHtml}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-1">
+                <h4 class="text-xs font-black text-slate-900 truncate">${escapeHtml(n.title)}</h4>
+                <span class="text-[10px] text-slate-400 shrink-0">${dateStr}</span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-0.5 leading-snug">${escapeHtml(n.body)}</p>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function markAllNotificationsAsRead() {
+      if (!userNotifications || userNotifications.length === 0) return;
+      const unread = userNotifications.filter(n => !n.read);
+      unread.forEach(async n => {
+        await window.FB.updateDoc(window.FB.doc(window.FB.db, "notifications", n.id), { read: true }).catch(() => {});
+      });
+      userNotifications.forEach(n => n.read = true);
+      updateNotificationBellBadge();
+      renderNotificationCenterList();
+    }
+
+    function updateNotificationBellBadge() {
+      const badge = document.getElementById("notificationBadge");
+      if (!badge) return;
+      const unreadCount = userNotifications.filter(n => !n.read).length;
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? "9+" : unreadCount;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
     }
 
     async function cancelBooking(bookingId) {
@@ -2060,6 +3135,52 @@
       const dateIso = document.getElementById("mgrDateSelect").value;
       const container = document.getElementById("mgrPitchesContainer");
       container.innerHTML = buildVenueScheduleHtml(venue, dateIso);
+
+      renderManagerWaitingList(venue);
+    }
+
+    function renderManagerWaitingList(venue) {
+      const container = document.getElementById("mgrWaitingListContainer");
+      const badge = document.getElementById("mgrWaitingListBadge");
+      if (!container || !venue) return;
+
+      const activeWaiters = waitingList.filter(w => w.venueId === venue.id && w.status === "ACTIVE");
+      if (badge) badge.textContent = `${activeWaiters.length} in attesa`;
+
+      if (activeWaiters.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 italic py-2">Nessun giocatore attualmente in lista d'attesa per questa struttura.</p>`;
+        return;
+      }
+
+      container.innerHTML = activeWaiters.map(w => {
+        const waLink = buildWhatsAppLink(
+          w.userPhone,
+          `Salve ${w.userName}, le scriviamo dalla direzione di ${venue.name}. Abbiamo visto che sei in lista d'attesa per giocare presso la nostra struttura!`
+        );
+
+        return `
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-slate-900">${escapeHtml(w.userName)}</span>
+                <span class="bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  ${w.type === 'MATCH' ? 'Partita singola' : 'Centro generale'}
+                </span>
+              </div>
+              <p class="text-slate-500 text-[11px]">
+                Ruolo: <strong class="text-slate-800">${ROLE_LABELS[w.userRole || 'ANY']}</strong> • 
+                Disponibilità: <strong class="text-slate-800">${w.preferredDate === 'ANY' ? 'Sempre' : (w.preferredDate || w.date || 'Tutti i giorni')}</strong>
+                ${w.startTime ? ` • Ore: ${escapeHtml(w.startTime)}` : ''}
+              </p>
+            </div>
+            <div class="flex items-center gap-2 self-end sm:self-center">
+              <a href="${waLink}" target="_blank" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-2xs hover:bg-emerald-100 transition">
+                <i class="fa-brands fa-whatsapp"></i> Contatta Giocatore
+              </a>
+            </div>
+          </div>
+        `;
+      }).join("");
     }
 
     function buildVenueScheduleHtml(venue, dateIso) {
