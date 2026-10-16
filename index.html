@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#ffffff" />
   <title>Flegrea Match - Prenota & Cerca Uomo</title>
 
   <!-- Manifesto PWA & Icone -->
@@ -11,9 +11,9 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
 
-  <!-- Supporto Nativo iOS -->
+  <!-- Supporto Nativo iOS (Status bar con icone scure su sfondo bianco) -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="FlegreaMatch" />
 
   <!-- Tailwind CSS -->
@@ -30,31 +30,52 @@
   <script src="./CentriSportivi.js"></script>
 
   <style>
-    body {
+    /* 1. Blocca il layout ai 4 bordi fisici dello schermo (Elimina bande nere su iOS) */
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background-color: #f8fafc;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #020617;
-      color: #f8fafc;
+      color: #0f172a;
       overscroll-behavior-y: contain;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
-    /* Fix Definitivo Safe Area Superiore e Inferiore per iPhone (Notch / Dynamic Island) */
+
+    /* 2. Safe Area Superiore e Inferiore in bianco solido */
     .ios-safe-top {
       padding-top: max(0.75rem, env(safe-area-inset-top));
-      background-color: #0f172a;
+      background-color: #ffffff;
     }
+
     .ios-safe-bottom {
-      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+      padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+      background-color: #ffffff;
     }
 
     #map {
       height: 100%;
       width: 100%;
       z-index: 1;
-      background: #0f172a;
+      background: #e2e8f0;
     }
 
-    /* Pin Mappa ancorati esattamente sulla posizione reale del Centro Sportivo */
+    /* 3. Fix Righe tra le tessere della mappa su display Retina iPhone */
+    .leaflet-container {
+      background-color: #e2e8f0 !important;
+    }
+    .leaflet-tile {
+      margin: -0.5px;
+      padding: 0.5px;
+      outline: 1px solid transparent;
+    }
+
+    /* 4. Pin Mappa ancorati esattamente sulla posizione reale del Centro Sportivo */
     .map-pin-anchor {
       position: relative;
       transform: translate(-50%, -100%);
@@ -62,7 +83,7 @@
       flex-direction: column;
       align-items: center;
       cursor: pointer;
-      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
+      filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.22));
       transition: transform 0.15s ease;
     }
     .map-pin-anchor:active {
@@ -81,18 +102,18 @@
       line-height: 1.1;
     }
     .map-pin-badge.pin-idle {
-      background: #0f172a;
-      color: #f8fafc;
-      border-color: #38bdf8;
+      background: #ffffff;
+      color: #0f172a;
+      border-color: #0284c7;
     }
     .map-pin-badge.pin-free {
       background: #10b981;
-      color: #022c22;
+      color: #ffffff;
       border-color: #ffffff;
     }
     .map-pin-badge.pin-approval {
       background: #f59e0b;
-      color: #451a03;
+      color: #ffffff;
       border-color: #ffffff;
     }
     .map-pin-arrow {
@@ -104,53 +125,53 @@
       margin-top: -1px;
     }
     .map-pin-anchor.idle-arrow .map-pin-arrow {
-      border-top-color: #38bdf8;
+      border-top-color: #0284c7;
     }
 
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="h-[100dvh] flex flex-col overflow-hidden bg-slate-950">
+<body class="flex flex-col overflow-hidden bg-slate-50 text-slate-900">
 
   <!-- ========================================================= -->
   <!-- 1. SCHERMATA DI BLOCCO LOGIN OBBLIGATORIO CON GOOGLE      -->
   <!-- ========================================================= -->
-  <div id="authGateScreen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 ios-safe-top ios-safe-bottom">
+  <div id="authGateScreen" class="fixed inset-0 bg-white z-50 flex flex-col justify-between p-6 ios-safe-top ios-safe-bottom">
     <div class="flex items-center justify-between">
-      <span class="text-[11px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full">
+      <span class="text-[11px] font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
         Flegrea Match • Live App
       </span>
     </div>
 
     <div class="my-auto max-w-sm mx-auto w-full text-center space-y-6">
-      <div class="w-20 h-20 rounded-3xl bg-emerald-500 text-slate-950 flex items-center justify-center text-4xl font-black mx-auto shadow-2xl shadow-emerald-500/30">
+      <div class="w-20 h-20 rounded-3xl bg-emerald-500 text-white flex items-center justify-center text-4xl font-black mx-auto shadow-xl shadow-emerald-500/25">
         <i class="fa-solid fa-futbol"></i>
       </div>
       <div class="space-y-2">
-        <h1 class="text-2xl font-black text-white tracking-tight">Flegrea Match</h1>
-        <p class="text-xs text-slate-400 leading-relaxed">
+        <h1 class="text-2xl font-black text-slate-900 tracking-tight">Flegrea Match</h1>
+        <p class="text-xs text-slate-500 leading-relaxed">
           Prenota i campi da Calcio a 5 e Calciotto nei Campi Flegrei o trova subito i giocatori mancanti per la tua partita.
         </p>
       </div>
 
-      <div id="authLoadingState" class="py-4 text-xs text-slate-400 flex items-center justify-center gap-2">
-        <i class="fa-solid fa-circle-notch fa-spin text-emerald-400 text-base"></i>
+      <div id="authLoadingState" class="py-4 text-xs text-slate-500 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-circle-notch fa-spin text-emerald-600 text-base"></i>
         <span>Verifica sessione in corso...</span>
       </div>
 
       <div id="authLoginAction" class="hidden space-y-3">
-        <button onclick="loginWithGoogle()" class="w-full bg-white hover:bg-slate-100 active:scale-[0.99] text-slate-950 font-extrabold py-3.5 px-5 rounded-2xl text-sm flex items-center justify-center gap-3 shadow-xl transition">
-          <i class="fa-brands fa-google text-rose-500 text-lg"></i>
+        <button onclick="loginWithGoogle()" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-extrabold py-3.5 px-5 rounded-2xl text-sm flex items-center justify-center gap-3 shadow-lg transition">
+          <i class="fa-brands fa-google text-rose-400 text-lg"></i>
           <span>Accedi con Google</span>
         </button>
-        <p class="text-[11px] text-slate-500">
+        <p class="text-[11px] text-slate-400">
           L'accesso con Google è obbligatorio per garantire prenotazioni reali e verificare giocatori e gestori dei centri sportivi.
         </p>
       </div>
     </div>
 
-    <div class="text-center text-[11px] text-slate-600">
+    <div class="text-center text-[11px] text-slate-400">
       Pozzuoli • Bacoli • Monte di Procida • Quarto • Agnano
     </div>
   </div>
@@ -158,31 +179,31 @@
   <!-- ========================================================= -->
   <!-- 2. ONBOARDING OBBLIGATORIO PRIMO ACCESSO (GIOCATORE)      -->
   <!-- ========================================================= -->
-  <div id="playerOnboardingModal" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl">
+  <div id="playerOnboardingModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl">
       <div class="text-center space-y-1">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto mb-2">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center text-xl mx-auto mb-2">
           <i class="fa-solid fa-user-check"></i>
         </div>
-        <h3 class="font-extrabold text-base text-white">Completa il tuo Profilo</h3>
-        <p class="text-xs text-slate-400">Inserisci i tuoi dati per prenotare i campi e usare WhatsApp con gli altri giocatori.</p>
+        <h3 class="font-extrabold text-base text-slate-900">Completa il tuo Profilo</h3>
+        <p class="text-xs text-slate-500">Inserisci i tuoi dati per prenotare i campi e usare WhatsApp con gli altri giocatori.</p>
       </div>
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-slate-300 mb-1 font-semibold">Nome e Cognome / Nickname *</label>
-          <input type="text" id="onboardPlayerName" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold" placeholder="Es. Marco Rossi" />
+          <label class="block text-slate-700 mb-1 font-semibold">Nome e Cognome / Nickname *</label>
+          <input type="text" id="onboardPlayerName" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold" placeholder="Es. Marco Rossi" />
         </div>
         <div>
-          <label class="block text-slate-300 mb-1 font-semibold">Numero WhatsApp *</label>
+          <label class="block text-slate-700 mb-1 font-semibold">Numero WhatsApp *</label>
           <div class="flex">
-            <span class="bg-slate-800 border border-r-0 border-slate-700 rounded-l-xl px-3 py-2.5 text-slate-300 font-bold">+39</span>
-            <input type="tel" id="onboardPlayerPhone" class="w-full bg-slate-950 border border-slate-700 rounded-r-xl px-3 py-2.5 text-white font-semibold" placeholder="Cel. senza spazi" />
+            <span class="bg-slate-100 border border-r-0 border-slate-300 rounded-l-xl px-3 py-2.5 text-slate-600 font-bold">+39</span>
+            <input type="tel" id="onboardPlayerPhone" class="w-full bg-slate-50 border border-slate-300 rounded-r-xl px-3 py-2.5 text-slate-900 font-semibold" placeholder="Cel. senza spazi" />
           </div>
         </div>
         <div>
-          <label class="block text-slate-300 mb-1 font-semibold">Ruolo Preferito in Campo *</label>
-          <select id="onboardPlayerRole" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold">
+          <label class="block text-slate-700 mb-1 font-semibold">Ruolo Preferito in Campo *</label>
+          <select id="onboardPlayerRole" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold">
             <option value="POR">🧤 Portiere</option>
             <option value="DIF">🛡️ Difensore</option>
             <option value="CEN" selected>⚙️ Centrocampista</option>
@@ -190,14 +211,14 @@
           </select>
         </div>
         <label class="flex items-start gap-2 pt-1 cursor-pointer">
-          <input type="checkbox" id="onboardPlayerConsent" checked class="mt-0.5 accent-emerald-500 rounded" />
-          <span class="text-[11px] text-slate-400 leading-snug">
+          <input type="checkbox" id="onboardPlayerConsent" checked class="mt-0.5 accent-emerald-600 rounded" />
+          <span class="text-[11px] text-slate-500 leading-snug">
             Autorizzo la condivisione del numero WhatsApp con gli organizzatori e i gestori dei campi per le partite a cui partecipo.
           </span>
         </label>
       </div>
 
-      <button onclick="savePlayerOnboarding()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3.5 rounded-2xl text-xs shadow-lg">
+      <button onclick="savePlayerOnboarding()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3.5 rounded-2xl text-xs shadow-md">
         Salva ed Entra nell'App
       </button>
     </div>
@@ -206,67 +227,67 @@
   <!-- ========================================================= -->
   <!-- 3. ONBOARDING OBBLIGATORIO PRIMO ACCESSO (GESTORE CAMPO)  -->
   <!-- ========================================================= -->
-  <div id="managerOnboardingModal" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-amber-500/40 w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl">
+  <div id="managerOnboardingModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-amber-300 w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl">
       <div class="text-center space-y-1">
-        <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+        <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
           Account Gestore Verificato
         </span>
-        <h3 id="onboardManagerVenueTitle" class="font-extrabold text-base text-white pt-1">Centro Sportivo</h3>
-        <p class="text-xs text-slate-400">Configura i recapiti ufficiali della struttura in caso di problematiche o comunicazioni urgenti.</p>
+        <h3 id="onboardManagerVenueTitle" class="font-extrabold text-base text-slate-900 pt-1">Centro Sportivo</h3>
+        <p class="text-xs text-slate-500">Configura i recapiti ufficiali della struttura in caso di problematiche o comunicazioni urgenti.</p>
       </div>
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-slate-300 mb-1 font-semibold">Nome Referente / Gestore *</label>
-          <input type="text" id="onboardManagerName" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold" placeholder="Nome del responsabile" />
+          <label class="block text-slate-700 mb-1 font-semibold">Nome Referente / Gestore *</label>
+          <input type="text" id="onboardManagerName" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold" placeholder="Nome del responsabile" />
         </div>
         <div>
-          <label class="block text-slate-300 mb-1 font-semibold">Telefono Chiamate Struttura *</label>
+          <label class="block text-slate-700 mb-1 font-semibold">Telefono Chiamate Struttura *</label>
           <div class="flex">
-            <span class="bg-slate-800 border border-r-0 border-slate-700 rounded-l-xl px-3 py-2.5 text-slate-300 font-bold">+39</span>
-            <input type="tel" id="onboardManagerPhone" class="w-full bg-slate-950 border border-slate-700 rounded-r-xl px-3 py-2.5 text-white font-semibold" placeholder="Recapito telefonico" />
+            <span class="bg-slate-100 border border-r-0 border-slate-300 rounded-l-xl px-3 py-2.5 text-slate-600 font-bold">+39</span>
+            <input type="tel" id="onboardManagerPhone" class="w-full bg-slate-50 border border-slate-300 rounded-r-xl px-3 py-2.5 text-slate-900 font-semibold" placeholder="Recapito telefonico" />
           </div>
         </div>
         <div>
-          <label class="block text-slate-300 mb-1 font-semibold">Numero WhatsApp Assistenza / Prenotazioni *</label>
+          <label class="block text-slate-700 mb-1 font-semibold">Numero WhatsApp Assistenza / Prenotazioni *</label>
           <div class="flex">
-            <span class="bg-slate-800 border border-r-0 border-slate-700 rounded-l-xl px-3 py-2.5 text-emerald-400 font-bold"><i class="fa-brands fa-whatsapp"></i></span>
-            <input type="tel" id="onboardManagerWhatsapp" class="w-full bg-slate-950 border border-slate-700 rounded-r-xl px-3 py-2.5 text-white font-semibold" placeholder="Numero WhatsApp attivo" />
+            <span class="bg-emerald-50 border border-r-0 border-slate-300 rounded-l-xl px-3 py-2.5 text-emerald-600 font-bold"><i class="fa-brands fa-whatsapp"></i></span>
+            <input type="tel" id="onboardManagerWhatsapp" class="w-full bg-slate-50 border border-slate-300 rounded-r-xl px-3 py-2.5 text-slate-900 font-semibold" placeholder="Numero WhatsApp attivo" />
           </div>
         </div>
       </div>
 
-      <button onclick="saveManagerOnboarding()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-2xl text-xs shadow-lg">
+      <button onclick="saveManagerOnboarding()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3.5 rounded-2xl text-xs shadow-md">
         Salva Recapiti e Apri Gestionale
       </button>
     </div>
   </div>
 
   <!-- ========================================================= -->
-  <!-- TOP HEADER BAR (CON SAFE-AREA IPHONE CORRETTA)            -->
+  <!-- TOP HEADER BAR (TEMA CHIARO CON SAFE-AREA IPHONE)         -->
   <!-- ========================================================= -->
-  <header class="ios-safe-top border-b border-slate-800 z-20 shrink-0">
+  <header class="ios-safe-top bg-white border-b border-slate-200 z-20 shrink-0 shadow-2xs">
     <div class="px-3.5 py-2.5 flex items-center justify-between">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-base shadow shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-black text-base shadow-sm shrink-0">
           <i class="fa-solid fa-futbol"></i>
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-1.5">
-            <h1 class="font-extrabold text-sm leading-tight text-white truncate">Flegrea Match</h1>
-            <span id="roleHeaderBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+            <h1 class="font-extrabold text-sm leading-tight text-slate-900 truncate">Flegrea Match</h1>
+            <span id="roleHeaderBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
               Giocatore
             </span>
           </div>
-          <p id="userBadgeText" class="text-[11px] text-slate-400 font-medium truncate">Connesso</p>
+          <p id="userBadgeText" class="text-[11px] text-slate-500 font-medium truncate">Connesso</p>
         </div>
       </div>
 
       <!-- Azioni rapide header -->
       <div class="flex items-center gap-2 shrink-0">
-        <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live
+        <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live
         </span>
       </div>
     </div>
@@ -279,13 +300,13 @@
     <!-- Barra Filtri Rapidi -->
     <div class="absolute top-3 left-0 right-0 z-10 px-3 flex flex-col gap-2 pointer-events-none">
       <div class="flex gap-1.5 overflow-x-auto no-scrollbar pointer-events-auto pb-1">
-        <select id="filterFormat" onchange="renderMapMarkers()" class="bg-slate-900/95 backdrop-blur text-white text-xs font-semibold px-3 py-2 rounded-full border border-slate-700 shadow-lg focus:outline-none">
+        <select id="filterFormat" onchange="renderMapMarkers()" class="bg-white/95 backdrop-blur text-slate-800 text-xs font-bold px-3 py-2 rounded-full border border-slate-200 shadow-md focus:outline-none">
           <option value="ALL">⚽ Tutti (C5 & C8)</option>
           <option value="C5">Calcio a 5 (10 gioc.)</option>
           <option value="C8">Calciotto (16 gioc.)</option>
         </select>
 
-        <select id="filterRole" onchange="renderMapMarkers()" class="bg-slate-900/95 backdrop-blur text-white text-xs font-semibold px-3 py-2 rounded-full border border-slate-700 shadow-lg focus:outline-none">
+        <select id="filterRole" onchange="renderMapMarkers()" class="bg-white/95 backdrop-blur text-slate-800 text-xs font-bold px-3 py-2 rounded-full border border-slate-200 shadow-md focus:outline-none">
           <option value="ALL">🏃 Tutti i ruoli</option>
           <option value="POR">🧤 Portiere</option>
           <option value="DIF">🛡️ Difensore</option>
@@ -293,7 +314,7 @@
           <option value="ATT">⚡ Attaccante</option>
         </select>
 
-        <select id="filterDate" onchange="renderMapMarkers()" class="bg-slate-900/95 backdrop-blur text-white text-xs font-semibold px-3 py-2 rounded-full border border-slate-700 shadow-lg focus:outline-none">
+        <select id="filterDate" onchange="renderMapMarkers()" class="bg-white/95 backdrop-blur text-slate-800 text-xs font-bold px-3 py-2 rounded-full border border-slate-200 shadow-md focus:outline-none">
           <option value="ALL">📅 Tutti i giorni</option>
         </select>
       </div>
@@ -304,18 +325,18 @@
 
     <!-- Controlli Mappa (Stile Mappa + GPS + Prenota) -->
     <div class="absolute bottom-4 left-3 z-10">
-      <button onclick="cycleMapStyle()" id="mapStyleBtn" class="bg-slate-900/95 text-slate-200 border border-slate-700 shadow-xl px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-1.5 active:scale-95">
-        <i class="fa-solid fa-layer-group text-sky-400"></i>
+      <button onclick="cycleMapStyle()" id="mapStyleBtn" class="bg-white/95 text-slate-800 border border-slate-200 shadow-lg px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-1.5 active:scale-95">
+        <i class="fa-solid fa-layer-group text-sky-600"></i>
         <span id="mapStyleLabel">Predefinita</span>
       </button>
     </div>
 
     <div class="absolute bottom-4 right-3 z-10 flex flex-col gap-2.5 items-end">
-      <button onclick="centerOnUserGPS(false)" title="La mia posizione" class="w-11 h-11 rounded-full bg-slate-900/95 text-white border border-slate-700 shadow-xl flex items-center justify-center active:scale-95">
-        <i class="fa-solid fa-location-crosshairs text-emerald-400"></i>
+      <button onclick="centerOnUserGPS(false)" title="La mia posizione" class="w-11 h-11 rounded-full bg-white/95 text-slate-800 border border-slate-200 shadow-lg flex items-center justify-center active:scale-95">
+        <i class="fa-solid fa-location-crosshairs text-emerald-600"></i>
       </button>
 
-      <button onclick="openBookingModal()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 active:scale-95">
+      <button onclick="openBookingModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-sm px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2 active:scale-95">
         <i class="fa-solid fa-calendar-plus"></i>
         <span>Prenota / Cerca Uomo</span>
       </button>
@@ -325,13 +346,13 @@
   <!-- ========================================================= -->
   <!-- VISTA GIOCATORE 2: LE MIE PARTITE & RICHIESTE             -->
   <!-- ========================================================= -->
-  <section id="viewMyMatches" class="hidden flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+  <section id="viewMyMatches" class="hidden flex-1 overflow-y-auto p-4 space-y-4 pb-24 bg-slate-50">
     <div class="flex items-center justify-between">
       <div>
-        <h2 class="text-lg font-bold text-white">Le Mie Partite & Prenotazioni</h2>
-        <p class="text-xs text-slate-400">Gestisci i campi prenotati, accetta i giocatori o disdici</p>
+        <h2 class="text-lg font-extrabold text-slate-900">Le Mie Partite & Prenotazioni</h2>
+        <p class="text-xs text-slate-500">Gestisci i campi prenotati, accetta i giocatori o disdici</p>
       </div>
-      <button onclick="openBookingModal()" class="bg-emerald-500 text-slate-950 text-xs font-extrabold px-3.5 py-2 rounded-xl">
+      <button onclick="openBookingModal()" class="bg-emerald-500 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl shadow-sm">
         + Prenota
       </button>
     </div>
@@ -342,33 +363,33 @@
   <!-- ========================================================= -->
   <!-- VISTA GIOCATORE 3: ACCOUNT PERSONALE                      -->
   <!-- ========================================================= -->
-  <section id="viewAccount" class="hidden flex-1 overflow-y-auto p-4 space-y-4 pb-24">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 max-w-md mx-auto">
-      <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-xl font-black">
+  <section id="viewAccount" class="hidden flex-1 overflow-y-auto p-4 space-y-4 pb-24 bg-slate-50">
+    <div class="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 max-w-md mx-auto shadow-xs">
+      <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center text-xl font-black">
           <i class="fa-solid fa-user"></i>
         </div>
         <div class="min-w-0 flex-1">
-          <h2 class="text-base font-extrabold text-white truncate" id="accDisplayName">Il Tuo Account</h2>
-          <p class="text-xs text-slate-400 truncate" id="accDisplayEmail"></p>
+          <h2 class="text-base font-extrabold text-slate-900 truncate" id="accDisplayName">Il Tuo Account</h2>
+          <p class="text-xs text-slate-500 truncate" id="accDisplayEmail"></p>
         </div>
       </div>
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Nome e Cognome / Nickname</label>
-          <input type="text" id="accNameInput" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold" />
+          <label class="block text-slate-600 mb-1 font-semibold">Nome e Cognome / Nickname</label>
+          <input type="text" id="accNameInput" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold" />
         </div>
         <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Numero WhatsApp</label>
+          <label class="block text-slate-600 mb-1 font-semibold">Numero WhatsApp</label>
           <div class="flex">
-            <span class="bg-slate-800 border border-r-0 border-slate-700 rounded-l-xl px-3 py-2.5 text-slate-300 font-bold">+39</span>
-            <input type="tel" id="accPhoneInput" class="w-full bg-slate-950 border border-slate-700 rounded-r-xl px-3 py-2.5 text-white font-semibold" />
+            <span class="bg-slate-100 border border-r-0 border-slate-300 rounded-l-xl px-3 py-2.5 text-slate-600 font-bold">+39</span>
+            <input type="tel" id="accPhoneInput" class="w-full bg-slate-50 border border-slate-300 rounded-r-xl px-3 py-2.5 text-slate-900 font-semibold" />
           </div>
         </div>
         <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Ruolo Preferito in Campo</label>
-          <select id="accRoleInput" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold">
+          <label class="block text-slate-600 mb-1 font-semibold">Ruolo Preferito in Campo</label>
+          <select id="accRoleInput" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold">
             <option value="POR">🧤 Portiere</option>
             <option value="DIF">🛡️ Difensore</option>
             <option value="CEN">⚙️ Centrocampista</option>
@@ -378,10 +399,10 @@
       </div>
 
       <div class="pt-2 space-y-2.5">
-        <button onclick="updateAccountProfile()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs shadow">
+        <button onclick="updateAccountProfile()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 rounded-xl text-xs shadow-sm">
           Salva Modifiche Profilo
         </button>
-        <button onclick="logoutUser()" class="w-full bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
+        <button onclick="logoutUser()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
           <i class="fa-solid fa-right-from-bracket"></i> Esci dall'Account Google
         </button>
       </div>
@@ -391,33 +412,33 @@
   <!-- ========================================================= -->
   <!-- VISTA ESCLUSIVA GESTORE CENTRO SPORTIVO                   -->
   <!-- ========================================================= -->
-  <section id="viewManagerExclusive" class="hidden flex-1 overflow-y-auto p-4 space-y-4 pb-24">
-    <div class="bg-slate-900 border border-amber-500/30 rounded-3xl p-4 space-y-3">
+  <section id="viewManagerExclusive" class="hidden flex-1 overflow-y-auto p-4 space-y-4 pb-24 bg-slate-50">
+    <div class="bg-white border border-amber-300 rounded-3xl p-4 space-y-3 shadow-xs">
       <div class="flex items-start justify-between gap-2">
         <div>
-          <span class="text-[10px] uppercase tracking-wider font-extrabold text-amber-300 bg-amber-500/20 px-2.5 py-0.5 rounded-full">
+          <span class="text-[10px] uppercase tracking-wider font-extrabold text-amber-800 bg-amber-100 border border-amber-200 px-2.5 py-0.5 rounded-full">
             Pannello Gestore Esclusivo
           </span>
-          <h2 id="mgrVenueTitle" class="text-lg font-black text-white mt-1">Centro Sportivo</h2>
-          <p id="mgrVenueAddress" class="text-xs text-slate-400"></p>
+          <h2 id="mgrVenueTitle" class="text-lg font-black text-slate-900 mt-1">Centro Sportivo</h2>
+          <p id="mgrVenueAddress" class="text-xs text-slate-500"></p>
         </div>
-        <button onclick="openPhoneBookingModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg">
+        <button onclick="openPhoneBookingModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-black text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 shrink-0 shadow-sm">
           <i class="fa-solid fa-phone-volume"></i> + Pren. Telefonica
         </button>
       </div>
 
       <!-- Recapiti del Gestore & Filtro Data -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-800">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
         <div>
-          <label class="text-[11px] text-slate-400 font-semibold">Giorno del Calendario:</label>
-          <select id="mgrDateSelect" onchange="renderExclusiveManagerSchedule()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-white"></select>
+          <label class="text-[11px] text-slate-600 font-semibold">Giorno del Calendario:</label>
+          <select id="mgrDateSelect" onchange="renderExclusiveManagerSchedule()" class="w-full mt-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900"></select>
         </div>
-        <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between">
           <div class="text-[11px]">
-            <span class="text-slate-400 block">Recapiti Assistenza Campo:</span>
-            <span id="mgrContactSummary" class="font-bold text-emerald-400">Non configurati</span>
+            <span class="text-slate-500 block">Recapiti Assistenza Campo:</span>
+            <span id="mgrContactSummary" class="font-bold text-emerald-600">Non configurati</span>
           </div>
-          <button onclick="openEditManagerContacts()" class="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-lg">
+          <button onclick="openEditManagerContacts()" class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-lg">
             Modifica
           </button>
         </div>
@@ -427,8 +448,8 @@
     <!-- Calendario Slot dei Campi del Suo Centro Sportivo -->
     <div id="mgrPitchesContainer" class="space-y-4"></div>
 
-    <div class="pt-4 border-t border-slate-800 flex justify-center">
-      <button onclick="logoutUser()" class="bg-slate-900 text-rose-400 border border-slate-800 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2">
+    <div class="pt-4 border-t border-slate-200 flex justify-center">
+      <button onclick="logoutUser()" class="bg-white text-rose-600 border border-rose-200 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-2xs">
         <i class="fa-solid fa-right-from-bracket"></i> Esci dall'Account Gestore
       </button>
     </div>
@@ -437,66 +458,66 @@
   <!-- ========================================================= -->
   <!-- VISTA 4: CONSOLE PROPRIETARIO DELL'APP (SUPER-ADMIN)      -->
   <!-- ========================================================= -->
-  <section id="viewSuperAdmin" class="hidden flex-1 overflow-y-auto p-4 space-y-5 pb-24">
-    <div class="bg-gradient-to-r from-indigo-950 to-slate-900 border border-indigo-500/40 rounded-3xl p-4 space-y-3">
+  <section id="viewSuperAdmin" class="hidden flex-1 overflow-y-auto p-4 space-y-5 pb-24 bg-slate-50">
+    <div class="bg-white border border-indigo-200 rounded-3xl p-4 space-y-3 shadow-xs">
       <div class="flex items-center justify-between">
         <div>
-          <span class="text-[10px] font-black uppercase tracking-wider bg-indigo-500 text-white px-2.5 py-0.5 rounded-full">
+          <span class="text-[10px] font-black uppercase tracking-wider bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">
             👑 Super-Admin (Proprietario App)
           </span>
-          <h2 class="text-base font-black text-white mt-1">Controllo Globale Flegrea Match</h2>
+          <h2 class="text-base font-black text-slate-900 mt-1">Controllo Globale Flegrea Match</h2>
         </div>
-        <button onclick="openAdminPhoneBooking()" class="bg-amber-500 text-slate-950 font-black text-xs px-3 py-2 rounded-xl">
+        <button onclick="openAdminPhoneBooking()" class="bg-amber-500 hover:bg-amber-600 text-white font-black text-xs px-3 py-2 rounded-xl shadow-xs">
           + Blocca Slot Campo
         </button>
       </div>
 
       <!-- Statistiche Live -->
       <div class="grid grid-cols-3 gap-2 pt-1">
-        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-2.5 text-center">
-          <span id="statTotalBookings" class="text-lg font-black text-emerald-400 block">0</span>
-          <span class="text-[10px] text-slate-400 font-semibold">Prenotazioni Attive</span>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-center">
+          <span id="statTotalBookings" class="text-lg font-black text-emerald-600 block">0</span>
+          <span class="text-[10px] text-slate-500 font-semibold">Prenotazioni Attive</span>
         </div>
-        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-2.5 text-center">
-          <span id="statTotalVenues" class="text-lg font-black text-sky-400 block">0</span>
-          <span class="text-[10px] text-slate-400 font-semibold">Centri Sportivi</span>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-center">
+          <span id="statTotalVenues" class="text-lg font-black text-sky-600 block">0</span>
+          <span class="text-[10px] text-slate-500 font-semibold">Centri Sportivi</span>
         </div>
-        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-2.5 text-center">
-          <span id="statTotalUsers" class="text-lg font-black text-amber-400 block">0</span>
-          <span class="text-[10px] text-slate-400 font-semibold">Utenti Registrati</span>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-center">
+          <span id="statTotalUsers" class="text-lg font-black text-amber-600 block">0</span>
+          <span class="text-[10px] text-slate-500 font-semibold">Utenti Registrati</span>
         </div>
       </div>
     </div>
 
     <!-- Ispezione Calendario di Qualsiasi Centro Sportivo -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-      <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
-        <i class="fa-solid fa-calendar-days text-indigo-400"></i>
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-2xs">
+      <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+        <i class="fa-solid fa-calendar-days text-indigo-600"></i>
         1. Gestisci Calendario di Qualsiasi Centro Sportivo
       </h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <select id="adminVenueSelect" onchange="renderSuperAdminPanel()" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white"></select>
-        <select id="adminDateSelect" onchange="renderSuperAdminPanel()" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white"></select>
+        <select id="adminVenueSelect" onchange="renderSuperAdminPanel()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900"></select>
+        <select id="adminDateSelect" onchange="renderSuperAdminPanel()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900"></select>
       </div>
       <div id="adminScheduleContainer" class="space-y-3 pt-2"></div>
     </div>
 
     <!-- Stato Gestori e Centri Sportivi -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-      <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
-        <i class="fa-solid fa-building-shield text-amber-400"></i>
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-2xs">
+      <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+        <i class="fa-solid fa-building-shield text-amber-600"></i>
         2. Stato Centri Sportivi & Recapiti Gestori
       </h3>
-      <p class="text-[11px] text-slate-400">
+      <p class="text-[11px] text-slate-500">
         Per associare un gestore a un campo, inserisci la sua email in <code>CentriSportivi.js</code> nella voce <code>managerEmails</code>.
       </p>
       <div id="adminVenuesManagersList" class="space-y-2"></div>
     </div>
 
     <!-- Elenco Utenti Registrati -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-      <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
-        <i class="fa-solid fa-users text-emerald-400"></i>
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-2xs">
+      <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+        <i class="fa-solid fa-users text-emerald-600"></i>
         3. Utenti Registrati nell'App
       </h3>
       <div id="adminUsersList" class="space-y-2"></div>
@@ -504,27 +525,27 @@
   </section>
 
   <!-- ========================================================= -->
-  <!-- BOTTOM NAVIGATION BAR (PER GIOCATORI & SUPER-ADMIN)       -->
+  <!-- BOTTOM NAVIGATION BAR (TEMA CHIARO CON SAFE-AREA IPHONE)  -->
   <!-- ========================================================= -->
-  <nav id="playerBottomNav" class="bg-slate-900 border-t border-slate-800 px-4 ios-safe-bottom flex items-center justify-around z-20 shrink-0">
-    <button onclick="switchTab('MAP')" id="tabBtnMap" class="flex flex-col items-center gap-1 text-emerald-400 font-semibold text-xs py-2.5">
+  <nav id="playerBottomNav" class="bg-white border-t border-slate-200 px-4 ios-safe-bottom flex items-center justify-around z-20 shrink-0">
+    <button onclick="switchTab('MAP')" id="tabBtnMap" class="flex flex-col items-center gap-1 text-emerald-600 font-bold text-xs py-2.5">
       <i class="fa-solid fa-map-location-dot text-lg"></i>
       <span>Mappa Campi</span>
     </button>
 
-    <button onclick="switchTab('MY_MATCHES')" id="tabBtnMyMatches" class="flex flex-col items-center gap-1 text-slate-400 font-medium text-xs relative py-2.5">
+    <button onclick="switchTab('MY_MATCHES')" id="tabBtnMyMatches" class="flex flex-col items-center gap-1 text-slate-500 font-medium text-xs relative py-2.5">
       <i class="fa-solid fa-futbol text-lg"></i>
       <span>Le Mie Partite</span>
       <span id="pendingBadge" class="hidden absolute top-1.5 right-2 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
     </button>
 
-    <button onclick="switchTab('ACCOUNT')" id="tabBtnAccount" class="flex flex-col items-center gap-1 text-slate-400 font-medium text-xs py-2.5">
+    <button onclick="switchTab('ACCOUNT')" id="tabBtnAccount" class="flex flex-col items-center gap-1 text-slate-500 font-medium text-xs py-2.5">
       <i class="fa-solid fa-user-circle text-lg"></i>
       <span>Account</span>
     </button>
 
     <!-- Visibile SOLO al Proprietario dell'App (Super-Admin) -->
-    <button onclick="switchTab('SUPER_ADMIN')" id="tabBtnSuperAdmin" class="hidden flex flex-col items-center gap-1 text-indigo-400 font-bold text-xs py-2.5">
+    <button onclick="switchTab('SUPER_ADMIN')" id="tabBtnSuperAdmin" class="hidden flex flex-col items-center gap-1 text-indigo-600 font-bold text-xs py-2.5">
       <i class="fa-solid fa-crown text-lg"></i>
       <span>Admin</span>
     </button>
@@ -533,90 +554,90 @@
   <!-- ========================================================= -->
   <!-- BOTTOM SHEET: DETTAGLIO CAMPO & PARTITE SULLA MAPPA       -->
   <!-- ========================================================= -->
-  <div id="venueSheetBackdrop" onclick="closeVenueSheet()" class="hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-xs"></div>
-  <div id="venueSheet" class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 rounded-t-3xl z-40 transform translate-y-full transition-transform duration-300 max-h-[82dvh] flex flex-col ios-safe-bottom">
-    <div class="w-12 h-1.5 bg-slate-700 rounded-full mx-auto my-2.5 shrink-0"></div>
+  <div id="venueSheetBackdrop" onclick="closeVenueSheet()" class="hidden fixed inset-0 bg-slate-900/40 z-30 backdrop-blur-xs"></div>
+  <div id="venueSheet" class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 rounded-t-3xl z-40 transform translate-y-full transition-transform duration-300 max-h-[82dvh] flex flex-col ios-safe-bottom shadow-2xl">
+    <div class="w-12 h-1.5 bg-slate-300 rounded-full mx-auto my-2.5 shrink-0"></div>
     <div id="venueSheetContent" class="px-4 pb-6 overflow-y-auto space-y-4"></div>
   </div>
 
   <!-- ========================================================= -->
   <!-- MODAL GIOCATORE: PRENOTA CAMPO & CREA PARTITA             -->
   <!-- ========================================================= -->
-  <div id="bookingModal" class="hidden fixed inset-0 bg-black/75 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[92dvh] flex flex-col overflow-hidden ios-safe-bottom">
-      <div class="px-4 py-3.5 border-b border-slate-800 flex items-center justify-between">
-        <h3 class="font-bold text-base text-white flex items-center gap-2">
-          <i class="fa-solid fa-calendar-plus text-emerald-400"></i>
+  <div id="bookingModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white border border-slate-200 w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[92dvh] flex flex-col overflow-hidden ios-safe-bottom shadow-2xl">
+      <div class="px-4 py-3.5 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-calendar-plus text-emerald-600"></i>
           Prenota Campo (1h 30m)
         </h3>
-        <button onclick="closeBookingModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center">
+        <button onclick="closeBookingModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
       <div class="p-4 overflow-y-auto space-y-4 text-xs">
         <div>
-          <label class="block text-slate-300 font-semibold mb-1">1. Centro Sportivo</label>
-          <select id="bookVenue" onchange="onBookVenueChange()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold"></select>
+          <label class="block text-slate-700 font-semibold mb-1">1. Centro Sportivo</label>
+          <select id="bookVenue" onchange="onBookVenueChange()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold"></select>
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-slate-300 font-semibold mb-1">2. Campo Specifico</label>
-            <select id="bookPitch" onchange="onBookPitchChange()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold"></select>
+            <label class="block text-slate-700 font-semibold mb-1">2. Campo Specifico</label>
+            <select id="bookPitch" onchange="onBookPitchChange()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold"></select>
           </div>
           <div>
-            <label class="block text-slate-300 font-semibold mb-1">Formato Campo</label>
-            <div id="bookFormatBadge" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-emerald-400 font-bold text-center">
+            <label class="block text-slate-700 font-semibold mb-1">Formato Campo</label>
+            <div id="bookFormatBadge" class="w-full bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5 text-emerald-700 font-bold text-center">
               Calcio a 5 (10 gioc.)
             </div>
           </div>
         </div>
 
         <div>
-          <label class="block text-slate-300 font-semibold mb-1">3. Giorno</label>
-          <select id="bookDate" onchange="renderTimeSlotGrid()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold"></select>
+          <label class="block text-slate-700 font-semibold mb-1">3. Giorno</label>
+          <select id="bookDate" onchange="renderTimeSlotGrid()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold"></select>
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <label class="text-slate-300 font-semibold">4. Orario Inizio (Durata 1h 30m)</label>
-            <span class="text-[11px] text-slate-400">17:00 – 22:30</span>
+            <label class="text-slate-700 font-semibold">4. Orario Inizio (Durata 1h 30m)</label>
+            <span class="text-[11px] text-slate-500">17:00 – 22:30</span>
           </div>
           <div id="timeSlotsGrid" class="grid grid-cols-3 gap-2"></div>
           <input type="hidden" id="selectedStartTime" value="" />
-          <p id="timeSlotHelper" class="text-[11px] text-amber-400 mt-1.5 hidden"></p>
+          <p id="timeSlotHelper" class="text-[11px] text-emerald-700 font-semibold mt-1.5 hidden"></p>
         </div>
 
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 space-y-3">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <span class="font-bold text-white block">Ti mancano giocatori?</span>
-              <span class="text-[11px] text-slate-400">Mostra il pin sulla mappa per trovare i mancanti</span>
+              <span class="font-bold text-slate-900 block">Ti mancano giocatori?</span>
+              <span class="text-[11px] text-slate-500">Mostra il pin sulla mappa per trovare i mancanti</span>
             </div>
-            <input type="checkbox" id="needPlayersToggle" checked onchange="toggleNeedPlayersSection()" class="w-5 h-5 accent-emerald-500 rounded" />
+            <input type="checkbox" id="needPlayersToggle" checked onchange="toggleNeedPlayersSection()" class="w-5 h-5 accent-emerald-600 rounded" />
           </div>
 
-          <div id="needPlayersSection" class="space-y-3 pt-2 border-t border-slate-800">
+          <div id="needPlayersSection" class="space-y-3 pt-2 border-t border-slate-200">
             <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label class="block text-slate-300 font-semibold mb-1">Quanti giocatori servono?</label>
-                <select id="bookMissingCount" onchange="renderMissingRolesInputs()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold"></select>
+                <label class="block text-slate-700 font-semibold mb-1">Quanti giocatori servono?</label>
+                <select id="bookMissingCount" onchange="renderMissingRolesInputs()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-bold"></select>
               </div>
               <div>
-                <label class="block text-slate-300 font-semibold mb-1">Quota a persona (€)</label>
-                <input type="number" id="bookPrice" value="6" min="0" max="30" step="0.5" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold" />
+                <label class="block text-slate-700 font-semibold mb-1">Quota a persona (€)</label>
+                <input type="number" id="bookPrice" value="6" min="0" max="30" step="0.5" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-bold" />
               </div>
             </div>
 
             <div>
-              <label class="block text-slate-300 font-semibold mb-1.5">Ruoli ricercati:</label>
+              <label class="block text-slate-700 font-semibold mb-1.5">Ruoli ricercati:</label>
               <div id="missingRolesContainer" class="grid grid-cols-2 gap-2"></div>
             </div>
 
             <div>
-              <label class="block text-slate-300 font-semibold mb-1">Livello Agonistico della Partita</label>
-              <select id="bookSkillLevel" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold">
+              <label class="block text-slate-700 font-semibold mb-1">Livello Agonistico della Partita</label>
+              <select id="bookSkillLevel" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold">
                 <option value="1">🍺 1. Dopopalista / Tra Amici (Zero pretese)</option>
                 <option value="2">👟 2. Amatoriale Tranquillo (Ritmo blando)</option>
                 <option value="3" selected>⚽ 3. Equilibrato / Buono (Buon ritmo)</option>
@@ -626,20 +647,20 @@
             </div>
 
             <div>
-              <label class="block text-slate-300 font-semibold mb-1.5">Modalità di ingresso dei giocatori</label>
+              <label class="block text-slate-700 font-semibold mb-1.5">Modalità di ingresso dei giocatori</label>
               <div class="grid grid-cols-2 gap-2">
                 <label class="cursor-pointer">
                   <input type="radio" name="joinMode" value="FREE" class="peer hidden" checked />
-                  <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-900 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 text-center">
-                    <div class="font-bold text-white">⚡ Libera</div>
-                    <div class="text-[10px] text-slate-400">Entrano subito senza attesa</div>
+                  <div class="p-2.5 rounded-xl border border-slate-300 bg-white peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center">
+                    <div class="font-bold text-slate-900">⚡ Libera</div>
+                    <div class="text-[10px] text-slate-500">Entrano subito senza attesa</div>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="joinMode" value="APPROVAL" class="peer hidden" />
-                  <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-900 peer-checked:border-amber-500 peer-checked:bg-amber-500/10 text-center">
-                    <div class="font-bold text-white">🔒 Su Accettazione</div>
-                    <div class="text-[10px] text-slate-400">Approvi o rifiuti tu chi entra</div>
+                  <div class="p-2.5 rounded-xl border border-slate-300 bg-white peer-checked:border-amber-500 peer-checked:bg-amber-50 text-center">
+                    <div class="font-bold text-slate-900">🔒 Su Accettazione</div>
+                    <div class="text-[10px] text-slate-500">Approvi o rifiuti tu chi entra</div>
                   </div>
                 </label>
               </div>
@@ -647,7 +668,7 @@
           </div>
         </div>
 
-        <button onclick="submitBooking()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3.5 rounded-2xl text-sm shadow-lg">
+        <button onclick="submitBooking()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3.5 rounded-2xl text-sm shadow-md">
           Conferma Prenotazione Campo
         </button>
       </div>
@@ -657,59 +678,59 @@
   <!-- ========================================================= -->
   <!-- MODAL GESTORE: INSERISCI PRENOTAZIONE TELEFONICA MANUALE  -->
   <!-- ========================================================= -->
-  <div id="phoneBookingModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-slate-900 border border-amber-500/40 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 text-xs ios-safe-bottom">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="font-extrabold text-base text-white flex items-center gap-2">
-          <i class="fa-solid fa-phone-volume text-amber-400"></i>
+  <div id="phoneBookingModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white border border-amber-300 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 text-xs ios-safe-bottom shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-phone-volume text-amber-600"></i>
           Nuova Prenotazione Telefonica
         </h3>
-        <button onclick="closePhoneBookingModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center">
+        <button onclick="closePhoneBookingModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
       <div class="space-y-3">
         <div>
-          <label class="block text-slate-300 font-semibold mb-1">Centro Sportivo</label>
-          <input type="text" id="phoneBookVenueLabel" disabled class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-amber-400 font-bold" />
+          <label class="block text-slate-700 font-semibold mb-1">Centro Sportivo</label>
+          <input type="text" id="phoneBookVenueLabel" disabled class="w-full bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-amber-800 font-bold" />
           <input type="hidden" id="phoneBookVenueId" />
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-slate-300 font-semibold mb-1">Campo Specifico</label>
-            <select id="phoneBookPitch" onchange="renderPhoneTimeSlots()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold"></select>
+            <label class="block text-slate-700 font-semibold mb-1">Campo Specifico</label>
+            <select id="phoneBookPitch" onchange="renderPhoneTimeSlots()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold"></select>
           </div>
           <div>
-            <label class="block text-slate-300 font-semibold mb-1">Giorno</label>
-            <select id="phoneBookDate" onchange="renderPhoneTimeSlots()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold"></select>
+            <label class="block text-slate-700 font-semibold mb-1">Giorno</label>
+            <select id="phoneBookDate" onchange="renderPhoneTimeSlots()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold"></select>
           </div>
         </div>
 
         <div>
-          <label class="block text-slate-300 font-semibold mb-1.5">Orario Inizio (Slot liberi da 1h 30m)</label>
+          <label class="block text-slate-700 font-semibold mb-1.5">Orario Inizio (Slot liberi da 1h 30m)</label>
           <div id="phoneTimeSlotsGrid" class="grid grid-cols-3 gap-1.5"></div>
           <input type="hidden" id="phoneSelectedStartTime" value="" />
-          <p id="phoneTimeSlotHelper" class="text-[11px] text-amber-400 mt-1.5 hidden"></p>
+          <p id="phoneTimeSlotHelper" class="text-[11px] text-amber-700 font-semibold mt-1.5 hidden"></p>
         </div>
 
-        <div class="border-t border-slate-800 pt-3 space-y-2.5">
+        <div class="border-t border-slate-200 pt-3 space-y-2.5">
           <div>
-            <label class="block text-slate-300 font-semibold mb-1">Nome del Cliente che ha prenotato *</label>
-            <input type="text" id="phoneCustomerName" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold" placeholder="Es. Gruppo Luigi / Mario Rossi" />
+            <label class="block text-slate-700 font-semibold mb-1">Nome del Cliente che ha prenotato *</label>
+            <input type="text" id="phoneCustomerName" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold" placeholder="Es. Gruppo Luigi / Mario Rossi" />
           </div>
           <div>
-            <label class="block text-slate-300 font-semibold mb-1">Numero di Telefono del Cliente *</label>
+            <label class="block text-slate-700 font-semibold mb-1">Numero di Telefono del Cliente *</label>
             <div class="flex">
-              <span class="bg-slate-800 border border-r-0 border-slate-700 rounded-l-xl px-3 py-2.5 text-slate-300 font-bold">+39</span>
-              <input type="tel" id="phoneCustomerNumber" class="w-full bg-slate-950 border border-slate-700 rounded-r-xl px-3 py-2.5 text-white font-semibold" placeholder="333..." />
+              <span class="bg-slate-100 border border-r-0 border-slate-300 rounded-l-xl px-3 py-2.5 text-slate-600 font-bold">+39</span>
+              <input type="tel" id="phoneCustomerNumber" class="w-full bg-slate-50 border border-slate-300 rounded-r-xl px-3 py-2.5 text-slate-900 font-semibold" placeholder="333..." />
             </div>
           </div>
         </div>
       </div>
 
-      <button onclick="submitPhoneBooking()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-2xl text-sm shadow-lg">
+      <button onclick="submitPhoneBooking()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3.5 rounded-2xl text-sm shadow-md">
         Registra Prenotazione e Blocca Slot
       </button>
     </div>
@@ -754,7 +775,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Garantisce che il login rimanga salvato anche chiudendo l'app
     setPersistence(auth, browserLocalPersistence).catch(() => {});
 
     window.FB = {
@@ -786,6 +806,7 @@
   <!-- ========================================================= -->
   <script>
     const FALLBACK_ADMIN_EMAILS = [
+      "domenico.colandrea@gmail.com",
       "domenico.colandrea007@gmail.com"
     ];
 
@@ -906,9 +927,10 @@
       ? window.VENUES_CONFIG
       : FALLBACK_VENUES;
 
-    const ADMIN_EMAILS = ((window.ADMIN_EMAILS && Array.isArray(window.ADMIN_EMAILS) && window.ADMIN_EMAILS.length > 0)
-      ? window.ADMIN_EMAILS
-      : FALLBACK_ADMIN_EMAILS).map(e => e.toLowerCase().trim());
+    const ADMIN_EMAILS = [...new Set([
+      ...(window.ADMIN_EMAILS && Array.isArray(window.ADMIN_EMAILS) ? window.ADMIN_EMAILS : []),
+      ...FALLBACK_ADMIN_EMAILS
+    ])].map(e => e.toLowerCase().trim());
 
     const START_TIMES = [
       "17:00", "17:30", "18:00", "18:30",
@@ -933,7 +955,6 @@
       ANY: "🏃 Qualsiasi Ruolo"
     };
 
-    // Stato globale (Nessun dato finto o di default!)
     let currentUser = null;
     let bookings = [];
     let allUsersList = [];
@@ -957,7 +978,7 @@
       {
         name: "Satellite",
         url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        attribution: 'Tiles &copy; Esri'
       }
     ];
 
@@ -1008,12 +1029,9 @@
       const todayIso = `${year}-${month}-${day}`;
       const todayUtcIso = now.toISOString().split("T")[0];
 
-      // Se la data selezionata è precedente a oggi
       if (dateIso < todayIso && dateIso < todayUtcIso) return true;
-      // Se la data è futura rispetto a oggi
       if (dateIso > todayIso && dateIso > todayUtcIso) return false;
 
-      // La data selezionata è oggi: confronta con l'orario reale corrente del sistema
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
       const slotMinutes = timeToMinutes(startStr);
       return slotMinutes <= currentMinutes;
@@ -1076,7 +1094,6 @@
       const email = (firebaseUser.email || "").toLowerCase().trim();
       const roleInfo = detectUserRoleByEmail(email);
 
-      // Leggiamo il profilo salvato su Firestore
       let savedProfile = null;
       try {
         const snap = await window.FB.getDoc(window.FB.doc(window.FB.db, "users", firebaseUser.uid));
@@ -1097,13 +1114,9 @@
         onboardingDone: Boolean(savedProfile && savedProfile.onboardingDone)
       };
 
-      // Nasconde la schermata di blocco login
       document.getElementById("authGateScreen").classList.add("hidden");
-
-      // Avvia ascolto real-time del database Cloud
       startRealtimeCloudListeners();
 
-      // Controlla se è il primo accesso assoluto
       if (!currentUser.onboardingDone) {
         if (currentUser.accountType === "MANAGER") {
           const v = VENUES_CONFIG.find(item => item.id === currentUser.managedVenueId);
@@ -1202,10 +1215,9 @@
       initDateSelects();
 
       if (currentUser.accountType === "MANAGER") {
-        // GESTORE CENTRO SPORTIVO: Vede SOLO la schermata esclusiva del SUO centro sportivo
         const myVenue = VENUES_CONFIG.find(v => v.id === currentUser.managedVenueId);
         roleBadge.textContent = "Gestore Struttura";
-        roleBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0";
+        roleBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 shrink-0";
         userSub.textContent = `${myVenue ? myVenue.name : ''} • ${currentUser.name}`;
 
         document.getElementById("playerBottomNav").classList.add("hidden");
@@ -1219,17 +1231,16 @@
         return;
       }
 
-      // GIOCATORE O SUPER-ADMIN
       document.getElementById("playerBottomNav").classList.remove("hidden");
       document.getElementById("viewManagerExclusive").classList.add("hidden");
 
       if (currentUser.accountType === "SUPER_ADMIN") {
         roleBadge.textContent = "👑 Super-Admin";
-        roleBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0";
+        roleBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0";
         document.getElementById("tabBtnSuperAdmin").classList.remove("hidden");
       } else {
         roleBadge.textContent = "Giocatore";
-        roleBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0";
+        roleBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0";
         document.getElementById("tabBtnSuperAdmin").classList.add("hidden");
       }
 
@@ -1320,7 +1331,7 @@
           if (userLocationMarker) mapInstance.removeLayer(userLocationMarker);
           userLocationMarker = L.circleMarker([latitude, longitude], {
             radius: 8,
-            fillColor: "#3b82f6",
+            fillColor: "#2563eb",
             color: "#ffffff",
             weight: 3,
             fillOpacity: 1
@@ -1389,7 +1400,6 @@
           `;
         }
 
-        // iconSize [0,0] + translate(-50%, -100%) ancora la punta del pin esattamente su [venue.lat, venue.lng]
         const icon = L.divIcon({
           className: "",
           html: pinHtml,
@@ -1428,14 +1438,14 @@
       });
 
       const formatsBadges = [...new Set((venue.pitches || []).map(p => p.format))]
-        .map(f => `<span class="bg-slate-800 text-emerald-400 border border-slate-700 px-2 py-0.5 rounded text-[11px] font-bold">${f === "C5" ? "Calcio a 5 (10p)" : "Calciotto (16p)"}</span>`)
+        .map(f => `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded text-[11px] font-bold">${f === "C5" ? "Calcio a 5 (10p)" : "Calciotto (16p)"}</span>`)
         .join(" ");
 
       const vContact = venueContactsMap[venue.id];
       const contactStrip = vContact
-        ? `<div class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between text-xs">
-             <span class="text-slate-400">Recapito Struttura: <strong class="text-white">+39 ${escapeHtml(vContact.phone)}</strong></span>
-             <a href="${buildWhatsAppLink(vContact.whatsapp || vContact.phone, 'Salve, scrivo da Flegrea Match per informazioni sul campo ' + venue.name)}" target="_blank" class="text-emerald-400 font-bold flex items-center gap-1">
+        ? `<div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center justify-between text-xs">
+             <span class="text-slate-500">Recapito Struttura: <strong class="text-slate-900">+39 ${escapeHtml(vContact.phone)}</strong></span>
+             <a href="${buildWhatsAppLink(vContact.whatsapp || vContact.phone, 'Salve, scrivo da Flegrea Match per informazioni sul campo ' + venue.name)}" target="_blank" class="text-emerald-600 font-bold flex items-center gap-1">
                <i class="fa-brands fa-whatsapp"></i> Contatta Campo
              </a>
            </div>`
@@ -1444,8 +1454,8 @@
       let matchesHtml = "";
       if (activeMatches.length === 0) {
         matchesHtml = `
-          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-center space-y-2">
-            <p class="text-xs text-slate-400">Nessuna squadra cerca giocatori in questo momento con i filtri selezionati.</p>
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center space-y-2">
+            <p class="text-xs text-slate-500">Nessuna squadra cerca giocatori in questo momento con i filtri selezionati.</p>
           </div>
         `;
       } else {
@@ -1454,31 +1464,31 @@
           const currentPlayers = m.maxPlayers - openSlotsCount;
           const skillInfo = SKILL_LEVELS[m.skillLevel] || SKILL_LEVELS[3];
           const modeBadge = m.joinMode === "FREE"
-            ? `<span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md text-[10px] font-bold">⚡ LIBERA</span>`
-            : `<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md text-[10px] font-bold">🔒 SU ACCETTAZIONE</span>`;
+            ? `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md text-[10px] font-bold">⚡ LIBERA</span>`
+            : `<span class="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold">🔒 SU ACCETTAZIONE</span>`;
 
           const slotsHtml = (m.slots || []).map(slot => {
             if (slot.status === "OCCUPIED") {
               return `
-                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between opacity-60">
-                  <span class="text-xs font-semibold text-slate-400">${ROLE_LABELS[slot.role]}</span>
-                  <span class="text-[11px] font-bold text-emerald-400">✓ ${escapeHtml(slot.player.userName)}</span>
+                <div class="bg-slate-100 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between opacity-75">
+                  <span class="text-xs font-semibold text-slate-500">${ROLE_LABELS[slot.role]}</span>
+                  <span class="text-[11px] font-bold text-emerald-600">✓ ${escapeHtml(slot.player.userName)}</span>
                 </div>
               `;
             }
 
             const alreadyRequested = (slot.requests || []).some(r => r.userId === currentUser.id && r.status === "PENDING");
             const actionBtn = alreadyRequested
-              ? `<span class="bg-amber-500/20 text-amber-300 text-[11px] font-bold px-3 py-1.5 rounded-lg">⏳ In attesa</span>`
-              : `<button onclick="handleSlotAction('${m.id}', '${slot.id}')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-3 py-1.5 rounded-xl">
+              ? `<span class="bg-amber-100 text-amber-800 text-[11px] font-bold px-3 py-1.5 rounded-lg">⏳ In attesa</span>`
+              : `<button onclick="handleSlotAction('${m.id}', '${slot.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl shadow-2xs">
                    ${m.joinMode === "FREE" ? "Entra subito" : "Invia richiesta"}
                  </button>`;
 
             return `
-              <div class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 flex items-center justify-between">
+              <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between">
                 <div>
-                  <span class="text-xs font-bold text-white block">${ROLE_LABELS[slot.role]}</span>
-                  <span class="text-[10px] text-slate-400">Posto mancante</span>
+                  <span class="text-xs font-bold text-slate-900 block">${ROLE_LABELS[slot.role]}</span>
+                  <span class="text-[10px] text-slate-500">Posto mancante</span>
                 </div>
                 ${actionBtn}
               </div>
@@ -1491,30 +1501,30 @@
           );
 
           return `
-            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-3">
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-3">
               <div class="flex items-start justify-between gap-2">
                 <div>
                   <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-xs font-black text-white bg-slate-800 px-2 py-0.5 rounded">${escapeHtml(m.date)} • ${escapeHtml(m.startTime)} - ${escapeHtml(m.endTime)}</span>
+                    <span class="text-xs font-black text-slate-900 bg-white border border-slate-200 px-2 py-0.5 rounded">${escapeHtml(m.date)} • ${escapeHtml(m.startTime)} - ${escapeHtml(m.endTime)}</span>
                     ${modeBadge}
                   </div>
-                  <p class="text-xs text-slate-300 font-semibold mt-1">${escapeHtml(m.pitchName)} • Org: ${escapeHtml(m.organizerName)}</p>
+                  <p class="text-xs text-slate-600 font-semibold mt-1">${escapeHtml(m.pitchName)} • Org: ${escapeHtml(m.organizerName)}</p>
                 </div>
                 <div class="text-right shrink-0">
-                  <span class="text-sm font-black text-emerald-400">${Number(m.pricePerPerson)}€</span>
-                  <span class="block text-[10px] text-slate-400">a persona</span>
+                  <span class="text-sm font-black text-emerald-600">${Number(m.pricePerPerson)}€</span>
+                  <span class="block text-[10px] text-slate-500">a persona</span>
                 </div>
               </div>
 
-              <div class="flex items-center justify-between bg-slate-900 px-3 py-2 rounded-xl text-xs">
-                <span class="font-bold text-white">Siete ${currentPlayers}/${m.maxPlayers} (Mancano ${openSlotsCount})</span>
-                <span class="text-[11px] text-amber-400 font-semibold">${skillInfo.short}</span>
+              <div class="flex items-center justify-between bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs">
+                <span class="font-bold text-slate-900">Siete ${currentPlayers}/${m.maxPlayers} (Mancano ${openSlotsCount})</span>
+                <span class="text-[11px] text-amber-600 font-semibold">${skillInfo.short}</span>
               </div>
 
               <div class="space-y-2">${slotsHtml}</div>
 
               <div class="pt-1 flex justify-end">
-                <a href="${waLink}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:underline">
+                <a href="${waLink}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:underline">
                   <i class="fa-brands fa-whatsapp text-base"></i> Scrivi a ${escapeHtml(m.organizerName)} su WhatsApp
                 </a>
               </div>
@@ -1526,19 +1536,19 @@
       document.getElementById("venueSheetContent").innerHTML = `
         <div class="flex items-start justify-between gap-2">
           <div>
-            <h3 class="text-base font-extrabold text-white">${escapeHtml(venue.name)}</h3>
-            <p class="text-xs text-slate-400">${escapeHtml(venue.address)}</p>
+            <h3 class="text-base font-extrabold text-slate-900">${escapeHtml(venue.name)}</h3>
+            <p class="text-xs text-slate-500">${escapeHtml(venue.address)}</p>
             <div class="mt-1.5 flex gap-1.5 flex-wrap">${formatsBadges}</div>
           </div>
-          <button onclick="openBookingModal('${venue.id}')" class="bg-emerald-500 text-slate-950 font-extrabold text-xs px-3.5 py-2.5 rounded-xl shrink-0 shadow">
+          <button onclick="openBookingModal('${venue.id}')" class="bg-emerald-500 text-white font-extrabold text-xs px-3.5 py-2.5 rounded-xl shrink-0 shadow-sm">
             <i class="fa-solid fa-calendar-plus mr-1"></i> Prenota Campo
           </button>
         </div>
 
         ${contactStrip}
 
-        <div class="border-t border-slate-800 pt-3 space-y-2.5">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Partite in cerca di giocatori (${activeMatches.length})</h4>
+        <div class="border-t border-slate-200 pt-3 space-y-2.5">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Partite in cerca di giocatori (${activeMatches.length})</h4>
           ${matchesHtml}
         </div>
       `;
@@ -1682,27 +1692,27 @@
 
         if (isPast) {
           return `
-            <button type="button" disabled class="p-2 rounded-xl border border-slate-800 bg-slate-950/60 text-slate-600 text-center cursor-not-allowed opacity-50 select-none">
-              <div class="font-bold text-xs line-through text-slate-500">${startStr}</div>
-              <div class="text-[10px] line-through text-slate-600">Passato</div>
+            <button type="button" disabled class="p-2 rounded-xl border border-slate-200 bg-slate-100 text-slate-400 text-center cursor-not-allowed select-none">
+              <div class="font-bold text-xs line-through">${startStr}</div>
+              <div class="text-[10px]">Passato</div>
             </button>
           `;
         }
 
         if (blocked) {
           return `
-            <button type="button" disabled class="p-2 rounded-xl border border-slate-800 bg-slate-950 text-slate-600 text-center cursor-not-allowed">
+            <button type="button" disabled class="p-2 rounded-xl border border-rose-200 bg-rose-50/60 text-slate-400 text-center cursor-not-allowed">
               <div class="font-bold text-xs line-through">${startStr}</div>
-              <div class="text-[10px] text-rose-500/80">Occupato</div>
+              <div class="text-[10px] text-rose-500 font-semibold">Occupato</div>
             </button>
           `;
         }
 
         return `
           <button type="button" onclick="selectTimeSlot('${startStr}')" id="slotBtn_${startStr.replace(':','')}"
-            class="time-slot-btn p-2 rounded-xl border border-slate-700 bg-slate-950 hover:border-emerald-400 text-center transition">
-            <div class="font-extrabold text-xs text-white">${startStr}</div>
-            <div class="text-[10px] text-emerald-400">fino alle ${endStr}</div>
+            class="time-slot-btn p-2 rounded-xl border border-slate-300 bg-white hover:border-emerald-500 text-center transition">
+            <div class="font-extrabold text-xs text-slate-900">${startStr}</div>
+            <div class="text-[10px] text-emerald-600 font-semibold">fino alle ${endStr}</div>
           </button>
         `;
       }).join("");
@@ -1713,7 +1723,7 @@
       } else {
         if (helper) {
           helper.textContent = "⚠️ Nessun orario disponibile per la giornata selezionata (tutti gli slot sono già passati o occupati).";
-          helper.className = "text-[11px] text-amber-400 mt-1.5";
+          helper.className = "text-[11px] text-amber-600 font-semibold mt-1.5";
           helper.classList.remove("hidden");
         }
       }
@@ -1722,17 +1732,17 @@
     function selectTimeSlot(startStr) {
       document.getElementById("selectedStartTime").value = startStr;
       document.querySelectorAll(".time-slot-btn").forEach(btn => {
-        btn.classList.remove("border-emerald-500", "bg-emerald-500/20");
+        btn.classList.remove("border-emerald-500", "bg-emerald-50", "ring-2", "ring-emerald-500/20");
       });
       const activeBtn = document.getElementById(`slotBtn_${startStr.replace(':','')}`);
       if (activeBtn) {
-        activeBtn.classList.add("border-emerald-500", "bg-emerald-500/20");
+        activeBtn.classList.add("border-emerald-500", "bg-emerald-50", "ring-2", "ring-emerald-500/20");
       }
       const endStr = minutesToTime(timeToMinutes(startStr) + MATCH_DURATION_MIN);
       const helper = document.getElementById("timeSlotHelper");
       if (helper) {
         helper.textContent = `✓ Campo bloccato dalle ${startStr} alle ${endStr} (1h 30m).`;
-        helper.className = "text-[11px] text-amber-400 mt-1.5";
+        helper.className = "text-[11px] text-emerald-700 font-semibold mt-1.5";
         helper.classList.remove("hidden");
       }
     }
@@ -1748,9 +1758,9 @@
       let html = "";
       for (let i = 0; i < count; i++) {
         html += `
-          <div class="bg-slate-900 border border-slate-700 rounded-xl p-2">
-            <label class="block text-[10px] text-slate-400 font-semibold mb-1">Mancante #${i + 1}</label>
-            <select class="missing-role-select w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-bold text-xs">
+          <div class="bg-white border border-slate-200 rounded-xl p-2">
+            <label class="block text-[10px] text-slate-500 font-semibold mb-1">Mancante #${i + 1}</label>
+            <select class="missing-role-select w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 font-bold text-xs">
               <option value="ANY">🏃 Qualsiasi</option>
               <option value="POR">🧤 Portiere</option>
               <option value="DIF">🛡️ Difensore</option>
@@ -1867,9 +1877,9 @@
 
       if (myItems.length === 0) {
         container.innerHTML = `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center space-y-2">
-            <p class="text-sm font-bold text-white">Nessuna prenotazione attiva</p>
-            <p class="text-xs text-slate-400">Prenota un campo o unisciti a una partita dalla mappa dei Campi Flegrei.</p>
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 text-center space-y-2 shadow-2xs">
+            <p class="text-sm font-bold text-slate-900">Nessuna prenotazione attiva</p>
+            <p class="text-xs text-slate-500">Prenota un campo o unisciti a una partita dalla mappa dei Campi Flegrei.</p>
           </div>
         `;
         return;
@@ -1888,12 +1898,12 @@
                 `Ciao ${s.player.userName}! Ti scrivo per la partita a ${venue ? venue.name : ''} delle ${b.startTime}.`
               );
               return `
-                <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between text-xs">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between text-xs">
                   <div>
-                    <span class="font-bold text-emerald-400">✓ ${ROLE_LABELS[s.role]}</span>
-                    <span class="text-slate-300 ml-1">• ${escapeHtml(s.player.userName)}</span>
+                    <span class="font-bold text-emerald-600">✓ ${ROLE_LABELS[s.role]}</span>
+                    <span class="text-slate-700 font-medium ml-1">• ${escapeHtml(s.player.userName)}</span>
                   </div>
-                  <a href="${waPlayer}" target="_blank" class="bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
+                  <a href="${waPlayer}" target="_blank" class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
                     <i class="fa-brands fa-whatsapp"></i> Chat
                   </a>
                 </div>
@@ -1908,18 +1918,18 @@
                     `Ciao ${r.userName}! Ho visto la tua richiesta per giocare a ${venue ? venue.name : ''} alle ${b.startTime}.`
                   );
                   return `
-                    <div class="mt-2 bg-slate-900 border border-amber-500/40 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                    <div class="mt-2 bg-amber-50/70 border border-amber-200 rounded-xl p-2.5 flex items-center justify-between gap-2">
                       <div>
-                        <span class="text-xs font-bold text-white block">Candidato: ${escapeHtml(r.userName)}</span>
-                        <a href="${waCand}" target="_blank" class="text-[11px] text-emerald-400 font-semibold inline-flex items-center gap-1">
+                        <span class="text-xs font-bold text-slate-900 block">Candidato: ${escapeHtml(r.userName)}</span>
+                        <a href="${waCand}" target="_blank" class="text-[11px] text-emerald-600 font-semibold inline-flex items-center gap-1">
                           <i class="fa-brands fa-whatsapp"></i> Contatta su WhatsApp
                         </a>
                       </div>
                       <div class="flex items-center gap-1.5">
-                        <button onclick="decideRequest('${b.id}','${s.id}','${r.userId}', true)" class="bg-emerald-500 text-slate-950 font-extrabold text-xs px-2.5 py-1.5 rounded-lg">
+                        <button onclick="decideRequest('${b.id}','${s.id}','${r.userId}', true)" class="bg-emerald-500 text-white font-extrabold text-xs px-2.5 py-1.5 rounded-lg">
                           ✓ Accetta
                         </button>
-                        <button onclick="decideRequest('${b.id}','${s.id}','${r.userId}', false)" class="bg-rose-500/20 text-rose-300 font-bold text-xs px-2.5 py-1.5 rounded-lg">
+                        <button onclick="decideRequest('${b.id}','${s.id}','${r.userId}', false)" class="bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs px-2.5 py-1.5 rounded-lg">
                           ✕ Rifiuta
                         </button>
                       </div>
@@ -1929,31 +1939,31 @@
               : "";
 
             return `
-              <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs">
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs">
                 <div class="flex items-center justify-between">
-                  <span class="font-bold text-white">${ROLE_LABELS[s.role]}</span>
-                  <span class="text-[11px] text-amber-400 font-semibold">Ancora libero</span>
+                  <span class="font-bold text-slate-900">${ROLE_LABELS[s.role]}</span>
+                  <span class="text-[11px] text-amber-600 font-semibold">Ancora libero</span>
                 </div>
                 ${reqsHtml}
               </div>
             `;
           }).join("");
         } else {
-          slotsManagementHtml = `<div class="text-xs text-emerald-400 font-semibold bg-slate-950 p-2.5 rounded-xl border border-slate-800">✓ Squadra al completo (${b.maxPlayers}/${b.maxPlayers})</div>`;
+          slotsManagementHtml = `<div class="text-xs text-emerald-700 font-semibold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">✓ Squadra al completo (${b.maxPlayers}/${b.maxPlayers})</div>`;
         }
 
         return `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-2xs">
             <div class="flex items-start justify-between">
               <div>
-                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${isOrganizer ? 'bg-emerald-500/20 text-emerald-300' : 'bg-blue-500/20 text-blue-300'}">
+                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${isOrganizer ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-sky-50 text-sky-700 border border-sky-200'}">
                   ${isOrganizer ? 'Organizzatore (Tuo Campo)' : 'Partecipante'}
                 </span>
-                <h3 class="text-sm font-extrabold text-white mt-1">${escapeHtml(venue ? venue.name : '')} • ${escapeHtml(b.pitchName)}</h3>
-                <p class="text-xs text-slate-400">${escapeHtml(b.date)} • Orario: <strong class="text-white">${escapeHtml(b.startTime)} - ${escapeHtml(b.endTime)}</strong></p>
+                <h3 class="text-sm font-extrabold text-slate-900 mt-1">${escapeHtml(venue ? venue.name : '')} • ${escapeHtml(b.pitchName)}</h3>
+                <p class="text-xs text-slate-500">${escapeHtml(b.date)} • Orario: <strong class="text-slate-900">${escapeHtml(b.startTime)} - ${escapeHtml(b.endTime)}</strong></p>
               </div>
               ${isOrganizer ? `
-                <button onclick="cancelBooking('${b.id}')" class="bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 text-xs font-bold px-3 py-1.5 rounded-xl">
+                <button onclick="cancelBooking('${b.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold px-3 py-1.5 rounded-xl">
                   Disdici Campo
                 </button>
               ` : ''}
@@ -2059,14 +2069,14 @@
           .sort((a, b) => a.startMinutes - b.startMinutes);
 
         const bookingsCards = pitchBookings.length === 0
-          ? `<p class="text-xs text-slate-500 italic py-2">Nessuna prenotazione registrata per questo campo nella data selezionata.</p>`
+          ? `<p class="text-xs text-slate-400 italic py-2">Nessuna prenotazione registrata per questo campo nella data selezionata.</p>`
           : pitchBookings.map(b => {
               const openCount = (b.slots || []).filter(s => s.status === "OPEN").length;
               const sourceBadge = b.bookingSource === "PHONE"
-                ? `<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[10px] font-bold">📞 Pren. Telefonica</span>`
+                ? `<span class="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-bold">📞 Pren. Telefonica</span>`
                 : (!b.needsPlayers || openCount === 0
-                    ? `<span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">✓ Squadra Completa</span>`
-                    : `<span class="bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded text-[10px] font-bold">🔍 Cerca ${openCount} gioc.</span>`);
+                    ? `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold">✓ Squadra Completa</span>`
+                    : `<span class="bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded text-[10px] font-bold">🔍 Cerca ${openCount} gioc.</span>`);
 
               const waLink = buildWhatsAppLink(
                 b.organizerPhone,
@@ -2074,19 +2084,19 @@
               );
 
               return `
-                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div class="space-y-1">
                     <div class="flex items-center gap-2 flex-wrap">
-                      <span class="text-xs font-black bg-emerald-500 text-slate-950 px-2 py-0.5 rounded">${escapeHtml(b.startTime)} - ${escapeHtml(b.endTime)}</span>
+                      <span class="text-xs font-black bg-emerald-500 text-white px-2 py-0.5 rounded">${escapeHtml(b.startTime)} - ${escapeHtml(b.endTime)}</span>
                       ${sourceBadge}
                     </div>
-                    <p class="text-xs font-bold text-white">Cliente: ${escapeHtml(b.organizerName)} • <span class="text-emerald-400">+39 ${escapeHtml(b.organizerPhone)}</span></p>
+                    <p class="text-xs font-bold text-slate-900">Cliente: ${escapeHtml(b.organizerName)} • <span class="text-emerald-600">+39 ${escapeHtml(b.organizerPhone)}</span></p>
                   </div>
                   <div class="flex items-center gap-2 self-end sm:self-center">
-                    <a href="${waLink}" target="_blank" class="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1">
+                    <a href="${waLink}" target="_blank" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1">
                       <i class="fa-brands fa-whatsapp"></i> WhatsApp
                     </a>
-                    <button onclick="cancelBooking('${b.id}')" class="bg-rose-500/20 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-lg">
+                    <button onclick="cancelBooking('${b.id}')" class="bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold px-2.5 py-1.5 rounded-lg">
                       Libera Slot
                     </button>
                   </div>
@@ -2097,21 +2107,21 @@
         const freeTimes = START_TIMES.filter(t => !isTimeSlotPast(dateIso, t) && !isSlotOverlapping(venue.id, pitch.id, dateIso, t));
 
         return `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-2xs">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
               <div>
-                <h3 class="text-sm font-extrabold text-white">${escapeHtml(pitch.name)}</h3>
-                <span class="text-[11px] text-slate-400">Capienza: ${pitch.maxPlayers} giocatori • Slot: 1h 30m</span>
+                <h3 class="text-sm font-extrabold text-slate-900">${escapeHtml(pitch.name)}</h3>
+                <span class="text-[11px] text-slate-500">Capienza: ${pitch.maxPlayers} giocatori • Slot: 1h 30m</span>
               </div>
-              <span class="text-xs font-bold text-emerald-400">${pitchBookings.length} prenotazioni</span>
+              <span class="text-xs font-bold text-emerald-600">${pitchBookings.length} prenotazioni</span>
             </div>
             <div class="space-y-2">${bookingsCards}</div>
-            <div class="pt-2 border-t border-slate-800">
-              <span class="block text-[11px] text-slate-400 font-semibold mb-1.5">Orari di inizio ancora liberi:</span>
+            <div class="pt-2 border-t border-slate-100">
+              <span class="block text-[11px] text-slate-500 font-semibold mb-1.5">Orari di inizio ancora liberi:</span>
               <div class="flex flex-wrap gap-1.5">
                 ${freeTimes.length > 0
-                  ? freeTimes.map(ft => `<span class="bg-slate-950 border border-slate-700 text-slate-300 text-[11px] font-semibold px-2.5 py-1 rounded-lg">${ft}</span>`).join("")
-                  : `<span class="text-xs text-rose-400 font-bold">Tutto esaurito per questa data</span>`
+                  ? freeTimes.map(ft => `<span class="bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-semibold px-2.5 py-1 rounded-lg">${ft}</span>`).join("")
+                  : `<span class="text-xs text-rose-600 font-bold">Tutto esaurito per questa data</span>`
                 }
               </div>
             </div>
@@ -2163,24 +2173,24 @@
 
         if (isPast) {
           return `
-            <button type="button" disabled class="p-2 rounded-xl border border-slate-800 bg-slate-950/60 text-slate-600 text-xs cursor-not-allowed opacity-50 select-none text-center">
-              <span class="line-through text-slate-500">${startStr}</span>
-              <span class="block text-[10px] line-through text-slate-600">Passato</span>
+            <button type="button" disabled class="p-2 rounded-xl border border-slate-200 bg-slate-100 text-slate-400 text-xs cursor-not-allowed select-none text-center">
+              <span class="line-through">${startStr}</span>
+              <span class="block text-[10px]">Passato</span>
             </button>
           `;
         }
 
         if (blocked) {
           return `
-            <button type="button" disabled class="p-2 rounded-xl border border-slate-800 bg-slate-950 text-slate-600 text-xs cursor-not-allowed text-center">
+            <button type="button" disabled class="p-2 rounded-xl border border-rose-200 bg-rose-50/60 text-slate-400 text-xs cursor-not-allowed text-center">
               <span class="line-through">${startStr}</span>
-              <span class="block text-[10px] text-rose-500/80">Occupato</span>
+              <span class="block text-[10px] text-rose-500 font-semibold">Occupato</span>
             </button>
           `;
         }
         return `
           <button type="button" onclick="selectPhoneTimeSlot('${startStr}')" id="phoneSlot_${startStr.replace(':','')}"
-            class="phone-slot-btn p-2 rounded-xl border border-slate-700 bg-slate-950 text-white font-bold text-xs hover:border-amber-400 transition">
+            class="phone-slot-btn p-2 rounded-xl border border-slate-300 bg-white text-slate-900 font-bold text-xs hover:border-amber-500 transition">
             ${startStr}
           </button>
         `;
@@ -2192,7 +2202,7 @@
       } else {
         if (helper) {
           helper.textContent = "⚠️ Nessun orario disponibile per la data selezionata (tutti gli slot sono già passati o occupati).";
-          helper.className = "text-[11px] text-amber-400 mt-1.5";
+          helper.className = "text-[11px] text-amber-600 font-semibold mt-1.5";
           helper.classList.remove("hidden");
         }
       }
@@ -2201,15 +2211,15 @@
     function selectPhoneTimeSlot(startStr) {
       document.getElementById("phoneSelectedStartTime").value = startStr;
       document.querySelectorAll(".phone-slot-btn").forEach(b => {
-        b.classList.remove("border-amber-500", "bg-amber-500/20", "text-amber-300");
+        b.classList.remove("border-amber-500", "bg-amber-50", "text-amber-800");
       });
       const btn = document.getElementById(`phoneSlot_${startStr.replace(':','')}`);
-      if (btn) btn.classList.add("border-amber-500", "bg-amber-500/20", "text-amber-300");
+      if (btn) btn.classList.add("border-amber-500", "bg-amber-50", "text-amber-800");
       const endStr = minutesToTime(timeToMinutes(startStr) + MATCH_DURATION_MIN);
       const helper = document.getElementById("phoneTimeSlotHelper");
       if (helper) {
         helper.textContent = `✓ Slot selezionato: ${startStr} - ${endStr} (1h 30m).`;
-        helper.className = "text-[11px] text-amber-300 mt-1.5 font-semibold";
+        helper.className = "text-[11px] text-amber-700 mt-1.5 font-semibold";
         helper.classList.remove("hidden");
       }
     }
@@ -2298,40 +2308,38 @@
         document.getElementById("adminScheduleContainer").innerHTML = buildVenueScheduleHtml(venue, dateIso);
       }
 
-      // Stato Centri Sportivi & Gestori
       document.getElementById("adminVenuesManagersList").innerHTML = VENUES_CONFIG.map(v => {
         const emails = (v.managerEmails && v.managerEmails.length > 0)
           ? v.managerEmails.join(", ")
           : "Nessuna email in CentriSportivi.js";
         const vc = venueContactsMap[v.id];
         const contactBadge = vc
-          ? `<span class="text-emerald-400 font-bold">Ref: ${escapeHtml(vc.managerName)} (+39 ${escapeHtml(vc.whatsapp)})</span>`
-          : `<span class="text-slate-500">Primo accesso gestore non ancora effettuato</span>`;
+          ? `<span class="text-emerald-600 font-bold">Ref: ${escapeHtml(vc.managerName)} (+39 ${escapeHtml(vc.whatsapp)})</span>`
+          : `<span class="text-slate-400">Primo accesso gestore non ancora effettuato</span>`;
 
         return `
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div>
-              <span class="font-extrabold text-white">${escapeHtml(v.name)}</span>
-              <span class="text-slate-400 ml-1">(${escapeHtml(v.city)})</span>
-              <div class="text-[11px] text-amber-300 mt-0.5">Email Gestori: ${escapeHtml(emails)}</div>
+              <span class="font-extrabold text-slate-900">${escapeHtml(v.name)}</span>
+              <span class="text-slate-500 ml-1">(${escapeHtml(v.city)})</span>
+              <div class="text-[11px] text-amber-700 font-medium mt-0.5">Email Gestori: ${escapeHtml(emails)}</div>
             </div>
             <div class="text-[11px]">${contactBadge}</div>
           </div>
         `;
       }).join("");
 
-      // Lista Utenti Registrati
       document.getElementById("adminUsersList").innerHTML = allUsersList.map(u => {
         const waUser = u.phone ? buildWhatsAppLink(u.phone, `Ciao ${u.name}, ti contatto dall'amministrazione di Flegrea Match.`) : "#";
         return `
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between text-xs">
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between text-xs">
             <div>
-              <span class="font-bold text-white">${escapeHtml(u.name || 'Utente')}</span>
-              <span class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded ml-1">${escapeHtml(u.accountType || 'PLAYER')}</span>
-              <div class="text-[11px] text-slate-400">${escapeHtml(u.email || '')} • +39 ${escapeHtml(u.phone || '-')}</div>
+              <span class="font-bold text-slate-900">${escapeHtml(u.name || 'Utente')}</span>
+              <span class="text-[10px] bg-white border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded ml-1">${escapeHtml(u.accountType || 'PLAYER')}</span>
+              <div class="text-[11px] text-slate-500">${escapeHtml(u.email || '')} • +39 ${escapeHtml(u.phone || '-')}</div>
             </div>
             ${u.phone ? `
-              <a href="${waUser}" target="_blank" class="bg-emerald-500/20 text-emerald-300 px-2.5 py-1.5 rounded-lg font-bold">
+              <a href="${waUser}" target="_blank" class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1.5 rounded-lg font-bold">
                 <i class="fa-brands fa-whatsapp"></i>
               </a>
             ` : ''}
@@ -2349,10 +2357,10 @@
       document.getElementById("viewAccount").classList.toggle("hidden", tab !== "ACCOUNT");
       document.getElementById("viewSuperAdmin").classList.toggle("hidden", tab !== "SUPER_ADMIN");
 
-      document.getElementById("tabBtnMap").className = `flex flex-col items-center gap-1 text-xs py-2.5 ${tab === "MAP" ? "text-emerald-400 font-bold" : "text-slate-400 font-medium"}`;
-      document.getElementById("tabBtnMyMatches").className = `flex flex-col items-center gap-1 text-xs relative py-2.5 ${tab === "MY_MATCHES" ? "text-emerald-400 font-bold" : "text-slate-400 font-medium"}`;
-      document.getElementById("tabBtnAccount").className = `flex flex-col items-center gap-1 text-xs py-2.5 ${tab === "ACCOUNT" ? "text-emerald-400 font-bold" : "text-slate-400 font-medium"}`;
-      document.getElementById("tabBtnSuperAdmin").className = `${currentUser && currentUser.accountType === "SUPER_ADMIN" ? "flex" : "hidden"} flex-col items-center gap-1 text-xs py-2.5 ${tab === "SUPER_ADMIN" ? "text-indigo-400 font-black" : "text-slate-400 font-medium"}`;
+      document.getElementById("tabBtnMap").className = `flex flex-col items-center gap-1 text-xs py-2.5 ${tab === "MAP" ? "text-emerald-600 font-bold" : "text-slate-500 font-medium"}`;
+      document.getElementById("tabBtnMyMatches").className = `flex flex-col items-center gap-1 text-xs relative py-2.5 ${tab === "MY_MATCHES" ? "text-emerald-600 font-bold" : "text-slate-500 font-medium"}`;
+      document.getElementById("tabBtnAccount").className = `flex flex-col items-center gap-1 text-xs py-2.5 ${tab === "ACCOUNT" ? "text-emerald-600 font-bold" : "text-slate-500 font-medium"}`;
+      document.getElementById("tabBtnSuperAdmin").className = `${currentUser && currentUser.accountType === "SUPER_ADMIN" ? "flex" : "hidden"} flex-col items-center gap-1 text-xs py-2.5 ${tab === "SUPER_ADMIN" ? "text-indigo-600 font-black" : "text-slate-500 font-medium"}`;
 
       if (tab === "MAP" && mapInstance) {
         setTimeout(() => mapInstance.invalidateSize(), 150);
