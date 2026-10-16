@@ -293,13 +293,3 @@ Aprire `CentriSportivi.js` e inserire un nuovo blocco nell'array esportato su `w
 
 ```
 
-### Assegnare i Privilegi di Super-Admin
-
-In `CentriSportivi.js`, aggiungere l'indirizzo email dell'amministratore all'interno dell'array `window.ADMIN_EMAILS`:
-
-```javascript
-window.ADMIN_EMAILS = [
-  "domenico.colandrea007@gmail.com"
-];
-
-```
