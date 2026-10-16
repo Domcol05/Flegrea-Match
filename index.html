@@ -2876,23 +2876,24 @@
     }
 
     async function registerFCMToken() {
-      if (!window.FB || !window.FB.messaging || !currentUser) return;
-      try {
-        const swReg = await navigator.serviceWorker.ready;
-        const token = await window.FB.getToken(window.FB.messaging, {
-          serviceWorkerRegistration: swReg
-        });
-        if (token) {
-          await window.FB.updateDoc(window.FB.doc(window.FB.db, "users", currentUser.id), {
-            fcmToken: token,
-            notificationsEnabled: true,
-            fcmUpdatedAt: new Date().toISOString()
-          }).catch(() => {});
-        }
-      } catch (err) {
-        console.warn("FCM getToken (VAPID key o browser restrizione):", err);
-      }
+  if (!window.FB || !window.FB.messaging || !currentUser) return;
+  try {
+    const swReg = await navigator.serviceWorker.ready;
+    const token = await window.FB.getToken(window.FB.messaging, {
+      vapidKey: "BMq5RLvCi1MjY2bb6zSu35eEPtIUUiRmFJ-T-nNX300MJUN-iduzQiadexzjq2VR4TmYJ83F29y9AAoGBAoYQ7c",
+      serviceWorkerRegistration: swReg
+    });
+    if (token) {
+      await window.FB.updateDoc(window.FB.doc(window.FB.db, "users", currentUser.id), {
+        fcmToken: token,
+        notificationsEnabled: true,
+        fcmUpdatedAt: new Date().toISOString()
+      }).catch(() => {});
     }
+  } catch (err) {
+    console.warn("FCM getToken:", err);
+  }
+}
 
     function setupForegroundFCM() {
       if (window.FB && window.FB.messaging && window.FB.onMessage) {
